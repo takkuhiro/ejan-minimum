@@ -7,6 +7,8 @@ requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.116.2",
     "google-cloud-storage>=3.4.0",
+    "google-genai>=1.38.0",
+    "pillow>=11.3.0",
     "pydantic>=2.11.9",
     "pydantic-settings>=2.10.1",
     "python-dotenv>=1.1.1",

@@ -53,7 +53,9 @@ class TestStorageService:
         mock_client, mock_bucket = mock_storage_client
         mock_blob = MagicMock()
         mock_bucket.blob.return_value = mock_blob
-        mock_blob.public_url = "https://storage.googleapis.com/test-bucket/image_123.jpg"
+        mock_blob.public_url = (
+            "https://storage.googleapis.com/test-bucket/image_123.jpg"
+        )
 
         service = StorageService()
         image_data = b"fake_image_data"
@@ -72,7 +74,9 @@ class TestStorageService:
         mock_client, mock_bucket = mock_storage_client
         mock_blob = MagicMock()
         mock_bucket.blob.return_value = mock_blob
-        mock_blob.public_url = "https://storage.googleapis.com/test-bucket/image_456.png"
+        mock_blob.public_url = (
+            "https://storage.googleapis.com/test-bucket/image_456.png"
+        )
 
         service = StorageService()
         image_data = b"fake_png_data"
@@ -87,7 +91,9 @@ class TestStorageService:
         mock_client, mock_bucket = mock_storage_client
         mock_blob = MagicMock()
         mock_bucket.blob.return_value = mock_blob
-        mock_blob.public_url = "https://storage.googleapis.com/test-bucket/image_789.webp"
+        mock_blob.public_url = (
+            "https://storage.googleapis.com/test-bucket/image_789.webp"
+        )
 
         service = StorageService()
         image_data = b"fake_webp_data"
@@ -110,7 +116,9 @@ class TestStorageService:
         mock_client, mock_bucket = mock_storage_client
         mock_blob = MagicMock()
         mock_bucket.blob.return_value = mock_blob
-        mock_blob.public_url = "https://storage.googleapis.com/test-bucket/video_123.mp4"
+        mock_blob.public_url = (
+            "https://storage.googleapis.com/test-bucket/video_123.mp4"
+        )
 
         service = StorageService()
         video_data = b"fake_video_data"
@@ -141,7 +149,9 @@ class TestStorageService:
             Exception("Network error"),
             None,  # Success on third try
         ]
-        mock_blob.public_url = "https://storage.googleapis.com/test-bucket/image_retry.jpg"
+        mock_blob.public_url = (
+            "https://storage.googleapis.com/test-bucket/image_retry.jpg"
+        )
 
         service = StorageService()
         image_data = b"fake_image_data"

@@ -192,8 +192,8 @@ terraform/
   - **ドキュメント作成**: `docs/agents/2.2-storage-service.md`に実装詳細を記録
   - _Requirements: 5.1, 5.2, 5.3, 5.4_
 
-- [ ] 3. AI統合サービスの実装
-- [ ] 3.1 Gemini API統合基盤の構築
+- [x] 3. AI統合サービスの実装
+- [x] 3.1 Gemini API統合基盤の構築
   - **作成場所**: `apps/api/app/services/ai_client.py`
   - **使用ツール**: `uv add google-genai pillow`
   - **実装内容**:
@@ -212,7 +212,7 @@ terraform/
   - **ドキュメント作成**: `docs/agents/3.1-ai-integration.md`にAPI設定を記録
   - _Requirements: 3.1_
 
-- [ ] 3.2 Nano Banana画像生成サービスの実装
+- [x] 3.2 Nano Banana画像生成サービスの実装
   - **作成場所**: `apps/api/app/services/image_generation.py`
   - **実装内容**:
     - スタイル生成用プロンプトテンプレート作成
@@ -225,7 +225,7 @@ terraform/
   - **コスト**: $0.039/画像 × 3 = $0.117/リクエスト
   - _Requirements: 1.5, 1.7, 2.4, 3.2_
 
-- [ ] 3.3 Gemini Structured Outputによる手順構造化
+- [x] 3.3 Gemini Structured Outputによる手順構造化
   - **作成場所**: `apps/api/app/services/tutorial_structure.py`
   - **実装内容**:
     - メイクアップ手順のデータ構造定義（Pydanticモデル: MakeupProcedure）

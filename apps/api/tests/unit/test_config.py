@@ -9,12 +9,15 @@ import os
 
 def test_config_loads_environment_variables():
     """Test that config properly loads environment variables."""
-    with patch.dict(os.environ, {
-        "GOOGLE_API_KEY": "test-key-123",
-        "GOOGLE_CLOUD_PROJECT": "test-project-456",
-        "STORAGE_BUCKET": "test-bucket-789",
-        "ENV": "development"
-    }):
+    with patch.dict(
+        os.environ,
+        {
+            "GOOGLE_API_KEY": "test-key-123",
+            "GOOGLE_CLOUD_PROJECT": "test-project-456",
+            "STORAGE_BUCKET": "test-bucket-789",
+            "ENV": "development",
+        },
+    ):
         # Import after setting env vars to test initialization
         from app.core.config import Settings
 
@@ -44,12 +47,15 @@ def test_config_has_default_values():
 
 def test_config_cors_origins_parsing():
     """Test that CORS origins are properly parsed from string."""
-    with patch.dict(os.environ, {
-        "GOOGLE_API_KEY": "key",
-        "GOOGLE_CLOUD_PROJECT": "project",
-        "STORAGE_BUCKET": "bucket",
-        "CORS_ORIGINS": "http://localhost:3000,http://localhost:3001"
-    }):
+    with patch.dict(
+        os.environ,
+        {
+            "GOOGLE_API_KEY": "key",
+            "GOOGLE_CLOUD_PROJECT": "project",
+            "STORAGE_BUCKET": "bucket",
+            "CORS_ORIGINS": "http://localhost:3000,http://localhost:3001",
+        },
+    ):
         from app.core.config import Settings
 
         settings = Settings()
@@ -67,19 +73,25 @@ def test_config_validation_for_required_fields():
         # Ensure no .env file is read
         with pytest.raises(ValidationError) as exc_info:
             from app.core.config import Settings
+
             Settings(_env_file=None)
 
         # Should fail because required fields are missing
-        assert "google_api_key" in str(exc_info.value) or "Field required" in str(exc_info.value)
+        assert "google_api_key" in str(exc_info.value) or "Field required" in str(
+            exc_info.value
+        )
 
 
 def test_config_singleton_pattern():
     """Test that config uses singleton pattern for efficiency."""
-    with patch.dict(os.environ, {
-        "GOOGLE_API_KEY": "key",
-        "GOOGLE_CLOUD_PROJECT": "project",
-        "STORAGE_BUCKET": "bucket"
-    }):
+    with patch.dict(
+        os.environ,
+        {
+            "GOOGLE_API_KEY": "key",
+            "GOOGLE_CLOUD_PROJECT": "project",
+            "STORAGE_BUCKET": "bucket",
+        },
+    ):
         from app.core.config import settings as settings1
         from app.core.config import settings as settings2
 
