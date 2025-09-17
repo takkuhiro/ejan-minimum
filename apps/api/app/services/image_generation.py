@@ -5,8 +5,10 @@ import uuid
 from enum import Enum
 from typing import List, Optional
 from dataclasses import dataclass
+from io import BytesIO
+import time
 
-from google.genai import types
+from PIL import Image
 
 from app.services.ai_client import AIClient, AIClientAPIError
 from app.services.storage import StorageService
@@ -95,7 +97,7 @@ class ImageGenerationService:
 
     async def generate_single_style(
         self,
-        image: types.Image,
+        image: Image.Image,
         gender: Gender,
         style_index: int,
         custom_text: Optional[str] = None,
@@ -103,7 +105,7 @@ class ImageGenerationService:
         """Generate a single style for the given image.
 
         Args:
-            image: Input face image.
+            image: Input face PIL Image.
             gender: Gender for style generation.
             style_index: Index of style variation (0-2).
             custom_text: Optional custom request text.
@@ -118,13 +120,22 @@ class ImageGenerationService:
             # Generate prompt
             prompt = generate_style_prompt(gender, style_index, custom_text)
 
+            # Debug: Check image before passing to API
+            print("-------- generate_single_style start --------")
+            print(f"Image type: {type(image)}")
+            if hasattr(image, "size"):
+                print(f"Image size: {image.size}")
+            if hasattr(image, "mode"):
+                print(f"Image mode: {image.mode}")
+            print(f"Prompt preview: {prompt[:100]}...")
+
             # Call AI API
             response = self.ai_client.generate_content(
                 model=self.model_name,
                 prompt=prompt,
                 image=image,
-                contents=[prompt, image],
             )
+            print("-------- generate_single_style end --------")
 
             # Extract text description
             description = self.ai_client.extract_text_from_response(response)
@@ -161,12 +172,12 @@ class ImageGenerationService:
             raise ImageGenerationError(f"Unexpected error: {e}")
 
     async def generate_three_styles(
-        self, image: types.Image, gender: Gender, custom_text: Optional[str] = None
+        self, image: Image.Image, gender: Gender, custom_text: Optional[str] = None
     ) -> List[StyleGeneration]:
         """Generate three different styles for the given image.
 
         Args:
-            image: Input face image.
+            image: Input face PIL Image.
             gender: Gender for style generation.
             custom_text: Optional custom request text.
 
@@ -187,6 +198,7 @@ class ImageGenerationService:
                 styles.append(style)
             except ImageGenerationError as e:
                 errors.append(f"Style {i+1}: {e}")
+            time.sleep(1)  # wait for rate limit
 
         if len(styles) < 3:
             error_msg = "Failed to generate all styles. " + " ".join(errors)
@@ -220,11 +232,11 @@ class ImageGenerationService:
         if not self.validate_image_size(image_data):
             raise ImageGenerationError("Image size exceeds 10MB limit")
 
-        # Create Image object for API
-        image = types.Image(
-            image_bytes=image_data,
-            mime_type="image/jpeg",  # Assume JPEG, API will handle other formats
-        )
+        # Create PIL Image object from bytes
+        try:
+            image = Image.open(BytesIO(image_data))
+        except Exception as e:
+            raise ImageGenerationError(f"Failed to open image: {e}")
 
         # Generate styles
         return await self.generate_three_styles(image, gender, custom_text)

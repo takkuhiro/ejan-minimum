@@ -4,7 +4,7 @@ import json
 import time
 from typing import Any, Dict, Optional, Union, List
 from google import genai
-from google.genai import types
+from PIL import Image
 
 
 class AIClientError(Exception):
@@ -65,16 +65,14 @@ class AIClient:
         self,
         model: str,
         prompt: str,
-        image: Optional[types.Image] = None,
-        **kwargs: Any,
+        image: Optional[Image.Image] = None,
     ) -> Any:
         """Generate content using specified model.
 
         Args:
             model: Model name to use.
             prompt: Text prompt for generation.
-            image: Optional image for multimodal generation.
-            **kwargs: Additional parameters for the API call.
+            image: Optional PIL Image for multimodal generation.
 
         Returns:
             Response from the API.
@@ -83,13 +81,14 @@ class AIClient:
             AIClientAPIError: If API call fails.
         """
         try:
-            contents: List[Union[str, types.Image]] = [prompt]
+            contents: List[Union[str, Image.Image]] = [prompt]
             if image is not None:
                 contents.append(image)
 
-            return self.client.models.generate_content(
-                model=model, contents=contents, **kwargs  # type: ignore[arg-type]
+            response = self.client.models.generate_content(
+                model=model, contents=contents  # type: ignore[arg-type]
             )
+            return response
         except Exception as e:
             raise AIClientAPIError(f"Failed to generate content: {e}")
 
@@ -97,7 +96,7 @@ class AIClient:
         self,
         model: str,
         prompt: str,
-        image: Optional[types.Image] = None,
+        image: Optional[Image.Image] = None,
         max_retries: int = 3,
         delay: float = 1.0,
         **kwargs: Any,
@@ -107,7 +106,7 @@ class AIClient:
         Args:
             model: Model name to use.
             prompt: Text prompt for generation.
-            image: Optional image for multimodal generation.
+            image: Optional PIL Image for multimodal generation.
             max_retries: Maximum number of retry attempts.
             delay: Initial delay between retries in seconds.
             **kwargs: Additional parameters for the API call.
@@ -122,7 +121,7 @@ class AIClient:
 
         for attempt in range(max_retries):
             try:
-                return self.generate_content(model, prompt, image, **kwargs)
+                return self.generate_content(model, prompt, image)
             except AIClientAPIError as e:
                 last_error = e
                 if attempt < max_retries - 1:

@@ -1,8 +1,9 @@
 """Style generation service for creating makeup styles."""
 
 from typing import List
+from io import BytesIO
 
-from google.genai import types
+from PIL import Image
 
 from app.models.response import GeneratedStyle
 from app.services.ai_client import AIClient
@@ -35,8 +36,8 @@ class StyleGenerationService:
         Returns:
             List of generated styles with images
         """
-        # Create Image object from bytes for Gemini
-        image = types.Image(image_bytes=photo_bytes)
+        # Create PIL Image object from bytes
+        image = Image.open(BytesIO(photo_bytes))
 
         # Generate styles using the image generation service
         styles = await self.image_service.generate_three_styles(
