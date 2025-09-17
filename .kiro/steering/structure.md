@@ -11,13 +11,16 @@ ejan-minimum/
 │   ├── steering/        # Project steering documents
 │   └── specs/          # Feature specifications
 ├── apps/                # Monorepo applications
-│   ├── api/            # Backend API service
-│   ├── web/            # Frontend web application
+│   ├── api/            # Backend API service (implemented)
+│   ├── web/            # Frontend web application (implemented)
 │   └── functions/      # Cloud Functions (planned)
 ├── docs/                # Project documentation
-│   └── PRODUCT.md      # Product requirements
-├── infra/               # Infrastructure as code (planned)
-│   └── terraform/      # Terraform configurations
+│   ├── PRODUCT.md      # Product requirements
+│   └── agents/         # Agent implementation docs
+├── terraform/           # Infrastructure as code (implemented)
+│   ├── environments/   # Environment configurations
+│   ├── modules/       # Terraform modules
+│   └── README.md      # Infrastructure documentation
 ├── CLAUDE.md           # Claude Code context
 └── README.md           # Project overview (planned)
 ```
@@ -62,31 +65,39 @@ apps/api/
 ├── samples/           # AI model integration examples
 │   ├── image_generation_with_nano_banana.py
 │   └── video_generation_with_veo3.py
-├── app/                # FastAPI application (planned)
-│   ├── main.py        # Application entry point
-│   ├── api/           # API endpoints
-│   │   ├── routes/    # Route handlers
-│   │   └── deps.py    # Dependencies
+├── app/                # FastAPI application (implemented)
+│   ├── main.py        # Application entry point (implemented)
+│   ├── __init__.py    # Package initialization
 │   ├── core/          # Core functionality
-│   │   ├── config.py  # Configuration
-│   │   └── storage.py # Storage clients
+│   │   ├── __init__.py
+│   │   ├── config.py  # Configuration (implemented)
+│   │   └── storage.py # Storage clients (implemented)
 │   ├── models/        # Data models
-│   │   ├── request.py # Request schemas
-│   │   └── response.py# Response schemas
+│   │   ├── __init__.py
+│   │   ├── request.py # Request schemas (implemented)
+│   │   └── response.py# Response schemas (implemented)
 │   └── services/      # Business logic
-│       ├── image.py   # Image processing
-│       └── video.py   # Video processing
-├── tests/             # Test files (planned)
+│       ├── __init__.py
+│       └── storage.py # Storage service (implemented)
+├── tests/             # Test files (implemented)
+│   ├── __init__.py
 │   ├── unit/         # Unit tests
+│   │   ├── __init__.py
+│   │   ├── test_config.py
+│   │   ├── test_models.py
+│   │   ├── test_storage_client.py
+│   │   └── test_storage_service.py
 │   └── integration/  # Integration tests
-├── pyproject.toml     # Python project config (planned)
+│       ├── __init__.py
+│       └── test_app_setup.py
+├── pyproject.toml     # Python project config (implemented)
 ├── .env              # Environment variables
 └── Dockerfile        # Container definition (planned)
 ```
 
-### Cloud Functions Structure (apps/functions)
+### Cloud Functions Structure (apps/functions) - Planned
 ```
-apps/functions/
+apps/functions/        # Not yet implemented
 ├── image_generation/    # Nano Banana function
 │   ├── main.py        # Function entry point
 │   ├── requirements.txt
@@ -99,20 +110,24 @@ apps/functions/
     └── clients.py     # Shared API clients
 ```
 
-### Infrastructure Structure (infra)
+### Infrastructure Structure (terraform) - Implemented
 ```
-infra/
-├── terraform/
-│   ├── environments/   # Environment configs
-│   │   ├── dev/       # Development
-│   │   └── prod/      # Production (future)
-│   ├── modules/       # Terraform modules
-│   │   ├── cloud_run/ # Cloud Run configs
-│   │   ├── storage/   # GCS buckets
-│   │   └── functions/ # Cloud Functions
-│   └── main.tf        # Main configuration
-└── scripts/           # Deployment scripts
-    └── deploy.sh      # Deployment automation
+terraform/
+├── environments/      # Environment configs
+│   └── dev/          # Development environment
+│       ├── main.tf   # Main configuration
+│       ├── variables.tf  # Variable definitions
+│       └── outputs.tf    # Output definitions
+├── modules/          # Terraform modules
+│   ├── iam/         # IAM configuration
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   └── outputs.tf
+│   └── storage/     # GCS buckets
+│       ├── main.tf
+│       ├── variables.tf
+│       └── outputs.tf
+└── README.md        # Infrastructure documentation
 ```
 
 ## Code Organization Patterns
@@ -231,15 +246,15 @@ from app.services import image_service
 
 ### Current State (as of update)
 - **Frontend**: Fully implemented with mock data (5 pages)
-- **Backend**: Sample implementations only
+- **Backend**: FastAPI structure implemented with storage service
 - **Cloud Functions**: Not yet implemented
-- **Infrastructure**: Not yet configured
+- **Infrastructure**: Terraform modules for storage and IAM implemented
 
 ### Next Implementation Steps
-1. **Backend API Setup**: Create FastAPI structure with endpoints
+1. **Backend API Endpoints**: Implement style generation and tutorial endpoints
 2. **Cloud Functions**: Implement Nano Banana and Veo3 functions
 3. **Integration**: Connect frontend to backend API
-4. **Infrastructure**: Setup Terraform for GCP resources
+4. **Cloud Run Deployment**: Deploy backend and frontend to Cloud Run
 
 ## Development Workflow
 

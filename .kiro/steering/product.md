@@ -63,11 +63,17 @@
 ### Completed Components
 - **Frontend Mock**: apps/web with all screens using mock data
 - **Sample AI Integrations**: Working examples for Nano Banana and Veo3
+- **Backend API Structure**: FastAPI application with core setup
+- **Storage Service**: Google Cloud Storage integration
+- **Data Models**: Request/response schemas defined
+- **Testing Framework**: Unit and integration test structure
+- **Infrastructure Modules**: Terraform for storage and IAM
 
 ### In Progress
-- **Backend API**: FastAPI setup pending
-- **Cloud Functions**: AI model integration pending
-- **Infrastructure**: Terraform configuration pending
+- **API Endpoints**: Style generation and tutorial endpoints
+- **Cloud Functions**: AI model integration as serverless functions
+- **Frontend-Backend Integration**: Connecting UI to API
+- **Cloud Run Deployment**: Container deployment setup
 
 ## Business Model (Future)
 
