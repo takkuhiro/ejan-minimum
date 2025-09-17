@@ -1,7 +1,5 @@
 """Tests for Storage service functionality."""
 
-import io
-from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -187,10 +185,11 @@ class TestStorageService:
         service = StorageService()
         filename = "test/path/image.jpg"
 
-        with patch.dict("os.environ", {"STORAGE_BUCKET": "my-bucket"}):
+        with patch("app.core.config.settings") as mock_settings:
+            mock_settings.storage_bucket = "my-bucket"
             url = service.get_public_url(filename)
 
-        assert url == "https://storage.googleapis.com/my-bucket/test/path/image.jpg"
+            assert url == "https://storage.googleapis.com/my-bucket/test/path/image.jpg"
 
     def test_file_exists_check(self, mock_storage_client):
         """Test checking if file exists in storage."""

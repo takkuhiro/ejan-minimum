@@ -1,6 +1,5 @@
 """AI client service for Gemini API integration."""
 
-import os
 import json
 import time
 from typing import Any, Dict, Optional, Union, List
@@ -45,12 +44,14 @@ class AIClient:
         """Initialize AI client with API key.
 
         Args:
-            api_key: Google API key. If None, uses GOOGLE_API_KEY from environment.
+            api_key: Google API key. If None, uses GOOGLE_API_KEY from settings.
 
         Raises:
             AIClientInitError: If API key is missing or client initialization fails.
         """
-        self.api_key = api_key or os.getenv("GOOGLE_API_KEY")
+        from app.core.config import settings
+
+        self.api_key = api_key or settings.google_api_key
 
         if not self.api_key:
             raise AIClientInitError("GOOGLE_API_KEY is not set")
@@ -86,8 +87,8 @@ class AIClient:
             if image is not None:
                 contents.append(image)
 
-            return self.client.models.generate_content(  # type: ignore
-                model=model, contents=contents, **kwargs
+            return self.client.models.generate_content(
+                model=model, contents=contents, **kwargs  # type: ignore[arg-type]
             )
         except Exception as e:
             raise AIClientAPIError(f"Failed to generate content: {e}")
@@ -201,9 +202,9 @@ class AIClient:
         try:
             # Note: response_mime_type and response_schema might not be in the type hints
             # but are supported in the actual API
-            response = self.client.models.generate_content(  # type: ignore
+            response = self.client.models.generate_content(  # type: ignore[call-arg]
                 model=model,
-                contents=[prompt],
+                contents=prompt,  # Pass string directly, not as list
                 response_mime_type="application/json",
                 response_schema=response_schema,
                 **kwargs,

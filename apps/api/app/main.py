@@ -13,6 +13,7 @@ import logging
 from typing import Any, Dict, AsyncGenerator
 
 from app.core.config import settings
+from app.api.routes import styles
 
 # Configure logging
 logging.basicConfig(
@@ -125,7 +126,7 @@ async def health_check() -> Dict[str, Any]:
     return {"status": "healthy", "service": "ejan-api", "version": "1.0.0"}
 
 
-# Include API routes (will be added as they're implemented)
-# from app.api.routes import styles, tutorials
-# app.include_router(styles.router, prefix="/api/styles", tags=["Styles"])
+# Include API routes
+app.include_router(styles.router)
+# from app.api.routes import tutorials
 # app.include_router(tutorials.router, prefix="/api/tutorials", tags=["Tutorials"])

@@ -26,9 +26,10 @@ class GeneratedStyle(BaseModel):
         description="Description of the style",
     )
     image_url: str = Field(
-        ...,
-        description="URL to the generated style image",
+        ..., description="URL to the generated style image", alias="imageUrl"
     )
+
+    model_config = {"populate_by_name": True}
 
     @field_validator("image_url")
     @classmethod
@@ -63,7 +64,7 @@ class GeneratedStyle(BaseModel):
             raise ValueError("Invalid URL format")
 
 
-class StylesGenerationResponse(BaseModel):
+class GenerateStylesResponse(BaseModel):
     """Response model for styles generation endpoint."""
 
     styles: List[GeneratedStyle] = Field(

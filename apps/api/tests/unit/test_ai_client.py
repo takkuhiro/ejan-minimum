@@ -19,7 +19,8 @@ class TestAIClientInitialization:
 
     def test_init_with_valid_api_key(self) -> None:
         """Test initialization with valid API key."""
-        with patch.dict(os.environ, {"GOOGLE_API_KEY": "test-api-key"}):
+        with patch("app.core.config.settings") as mock_settings:
+            mock_settings.google_api_key = "test-api-key"
             client = AIClient()
             assert client.api_key == "test-api-key"
             assert client.client is not None
@@ -27,7 +28,8 @@ class TestAIClientInitialization:
 
     def test_init_without_api_key(self) -> None:
         """Test initialization without API key."""
-        with patch.dict(os.environ, {}, clear=True):
+        with patch("app.core.config.settings") as mock_settings:
+            mock_settings.google_api_key = None
             with pytest.raises(AIClientInitError) as exc_info:
                 AIClient()
             assert "GOOGLE_API_KEY is not set" in str(exc_info.value)

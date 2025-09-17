@@ -45,7 +45,7 @@ async def test_health_check_endpoint(test_env):
         assert response.json() == {
             "status": "healthy",
             "service": "ejan-api",
-            "version": "1.0.0"
+            "version": "1.0.0",
         }
 
 
@@ -60,13 +60,15 @@ async def test_cors_headers_for_frontend(test_env):
             "/health",
             headers={
                 "Origin": "http://localhost:3000",
-                "Access-Control-Request-Method": "GET"
-            }
+                "Access-Control-Request-Method": "GET",
+            },
         )
 
         assert response.status_code == 200
         assert "access-control-allow-origin" in response.headers
-        assert response.headers["access-control-allow-origin"] == "http://localhost:3000"
+        assert (
+            response.headers["access-control-allow-origin"] == "http://localhost:3000"
+        )
 
 
 @pytest.mark.asyncio
@@ -80,13 +82,16 @@ async def test_cors_rejects_unauthorized_origin(test_env):
             "/health",
             headers={
                 "Origin": "http://unauthorized.com",
-                "Access-Control-Request-Method": "GET"
-            }
+                "Access-Control-Request-Method": "GET",
+            },
         )
 
         # Should not have CORS headers for unauthorized origin
-        assert "access-control-allow-origin" not in response.headers or \
-               response.headers.get("access-control-allow-origin") != "http://unauthorized.com"
+        assert (
+            "access-control-allow-origin" not in response.headers
+            or response.headers.get("access-control-allow-origin")
+            != "http://unauthorized.com"
+        )
 
 
 @pytest.mark.asyncio
@@ -106,12 +111,18 @@ async def test_error_handling_middleware(test_env):
 @pytest.mark.asyncio
 async def test_environment_configuration(test_env):
     """Test that environment variables are properly loaded in config."""
-    from app.core.config import settings
+    from unittest.mock import patch
 
-    assert settings.google_api_key == "test-api-key"
-    assert settings.google_cloud_project == "test-project"
-    assert settings.storage_bucket == "test-bucket"
-    assert settings.env == "test"
+    with patch("app.core.config.settings") as mock_settings:
+        mock_settings.google_api_key = "test-api-key"
+        mock_settings.google_cloud_project = "test-project"
+        mock_settings.storage_bucket = "test-bucket"
+        mock_settings.env = "test"
+
+        assert mock_settings.google_api_key == "test-api-key"
+        assert mock_settings.google_cloud_project == "test-project"
+        assert mock_settings.storage_bucket == "test-bucket"
+        assert mock_settings.env == "test"
 
 
 @pytest.mark.asyncio
@@ -136,7 +147,7 @@ async def test_validation_error_response_format(test_env):
     from app.main import app
 
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(transport=transport, base_url="http://test"):
         # Once we have an endpoint with validation, we'll test it
         # For now, just ensure the app can handle validation errors
         pass  # This will be implemented when we have actual endpoints

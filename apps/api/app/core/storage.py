@@ -1,7 +1,5 @@
 """Google Cloud Storage client setup and management."""
 
-import os
-
 from google.cloud import storage  # type: ignore[import-untyped]
 from google.cloud.storage import Bucket  # type: ignore[import-untyped]
 
@@ -24,7 +22,9 @@ class StorageClient:
         Raises:
             ValueError: If STORAGE_BUCKET environment variable is not set
         """
-        self.bucket_name: str | None = os.getenv("STORAGE_BUCKET")
+        from app.core.config import settings
+
+        self.bucket_name: str = settings.storage_bucket
         if not self.bucket_name:
             raise ValueError("STORAGE_BUCKET environment variable is required")
 

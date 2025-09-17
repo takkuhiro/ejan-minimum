@@ -1,7 +1,6 @@
 """Storage service for file upload and management."""
 
 import io
-import os
 import time
 import uuid
 from datetime import datetime
@@ -138,7 +137,9 @@ class StorageService:
         Returns:
             str: Public URL of the file
         """
-        bucket_name = os.getenv("STORAGE_BUCKET")
+        from app.core.config import settings
+
+        bucket_name = settings.storage_bucket
         return f"https://storage.googleapis.com/{bucket_name}/{filename}"
 
     def file_exists(self, filename: str) -> bool:

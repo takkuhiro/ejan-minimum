@@ -153,12 +153,12 @@ class TestGeneratedStyleResponse:
 
 
 # Test for StylesGenerationResponse
-class TestStylesGenerationResponse:
+class TestGenerateStylesResponse:
     """Test suite for StylesGenerationResponse model."""
 
     def test_valid_styles_response(self):
         """Test creating a valid styles generation response."""
-        from app.models.response import StylesGenerationResponse, GeneratedStyle
+        from app.models.response import GenerateStylesResponse, GeneratedStyle
 
         styles = [
             GeneratedStyle(
@@ -181,7 +181,7 @@ class TestStylesGenerationResponse:
             ),
         ]
 
-        response = StylesGenerationResponse(styles=styles)
+        response = GenerateStylesResponse(styles=styles)
 
         assert len(response.styles) == 3
         assert response.styles[0].title == "Natural Look"
@@ -190,10 +190,10 @@ class TestStylesGenerationResponse:
 
     def test_empty_styles_list(self):
         """Test that empty styles list is invalid."""
-        from app.models.response import StylesGenerationResponse
+        from app.models.response import GenerateStylesResponse
 
         with pytest.raises(ValidationError) as exc_info:
-            StylesGenerationResponse(styles=[])
+            GenerateStylesResponse(styles=[])
 
         errors = exc_info.value.errors()
         assert any(

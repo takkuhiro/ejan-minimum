@@ -22,13 +22,15 @@ class TestStorageClient:
     def test_bucket_name_from_env(self):
         """Test that bucket name is loaded from environment variable."""
         test_bucket = "test-bucket-name"
-        with patch.dict(os.environ, {"STORAGE_BUCKET": test_bucket}):
+        with patch("app.core.config.settings") as mock_settings:
+            mock_settings.storage_bucket = test_bucket
             client = StorageClient()
             assert client.bucket_name == test_bucket
 
     def test_missing_bucket_name_raises_error(self):
         """Test that missing STORAGE_BUCKET env var raises error."""
-        with patch.dict(os.environ, {}, clear=True):
+        with patch("app.core.config.settings") as mock_settings:
+            mock_settings.storage_bucket = None
             with pytest.raises(
                 ValueError, match="STORAGE_BUCKET environment variable is required"
             ):
@@ -42,7 +44,8 @@ class TestStorageClient:
             mock_client.bucket.return_value = mock_bucket
             mock_client_cls.return_value = mock_client
 
-            with patch.dict(os.environ, {"STORAGE_BUCKET": "test-bucket"}):
+            with patch("app.core.config.settings") as mock_settings:
+                mock_settings.storage_bucket = "test-bucket"
                 client = StorageClient()
                 bucket = client.get_bucket()
 
@@ -51,7 +54,7 @@ class TestStorageClient:
 
     def test_service_account_authentication(self):
         """Test that service account is used for authentication."""
-        with patch("app.core.storage.storage.Client") as mock_client:
+        with patch("app.core.storage.storage.Client"):
             with patch.dict(
                 os.environ,
                 {

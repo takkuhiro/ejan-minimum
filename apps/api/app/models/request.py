@@ -80,6 +80,11 @@ class TutorialGenerationRequest(BaseModel):
     )
 
 
+# Alias for consistency with API naming
+GenerateStylesRequest = PhotoUploadRequest
+GenerateTutorialRequest = TutorialGenerationRequest
+
+
 def validate_image_format(data: bytes) -> str:
     """
     Validate image format based on file signature.
