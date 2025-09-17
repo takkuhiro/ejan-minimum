@@ -66,12 +66,15 @@
 - **Backend API Structure**: FastAPI application with core setup
 - **Storage Service**: Google Cloud Storage integration
 - **Data Models**: Request/response schemas defined
-- **Testing Framework**: Unit and integration test structure
+- **AI Client Service**: Gemini integration for image/video generation
+- **Image Generation Service**: Nano Banana implementation
+- **Tutorial Structure Service**: Step-by-step tutorial generation
+- **Testing Framework**: Unit and integration test structure with full coverage
 - **Infrastructure Modules**: Terraform for storage and IAM
 
 ### In Progress
-- **API Endpoints**: Style generation and tutorial endpoints
-- **Cloud Functions**: AI model integration as serverless functions
+- **API Endpoints**: Finalizing style generation and tutorial endpoints
+- **Cloud Functions**: Deploying AI models as serverless functions
 - **Frontend-Backend Integration**: Connecting UI to API
 - **Cloud Run Deployment**: Container deployment setup
 

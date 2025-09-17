@@ -62,6 +62,7 @@ pydantic>=2.11.9        # Data validation
 pydantic-settings>=2.10.1  # Settings management
 python-dotenv>=1.1.1    # Environment management
 google-cloud-storage>=3.4.0  # GCS client
+google-generativeai     # Gemini AI client (implemented in services)
 
 # Development dependencies
 black>=25.1.0           # Code formatter
