@@ -41,6 +41,7 @@ npm run test -- --coverage     # テスト実行とカバレッジ（設定時�
 - **Node.js 18+**: Frontend開発用
 - **uv**: Pythonパッケージマネージャー（pip/venvではない）
 - **gcloud CLI**: Google Cloud Platform管理
+- **Terraform**: インフラストラクチャ管理（v1.5+推奨）
 - **Google Cloud Project**: 事前に作成済み
 - **環境変数**: `.env`ファイルに以下を設定
   ```env
@@ -48,6 +49,50 @@ npm run test -- --coverage     # テスト実行とカバレッジ（設定時�
   GOOGLE_CLOUD_PROJECT=<GCPプロジェクトID>
   STORAGE_BUCKET=<Cloud Storageバケット名>
   ```
+
+### Terraformによるインフラ管理
+
+**重要**: インフラリソースはTerraformで管理する。各タスク実装時に必要なリソースを定義し、`terraform plan`で確認後、ユーザーが`terraform apply`を実行する。
+
+#### Terraformディレクトリ構造
+```
+terraform/
+├── main.tf              # プロバイダー設定、バックエンド設定
+├── variables.tf         # 変数定義
+├── outputs.tf          # 出力値定義
+├── storage.tf          # Cloud Storageリソース（タスク2.1で作成）
+├── iam.tf              # IAMリソース（タスク2.1で作成）
+├── functions.tf        # Cloud Functions（タスク4.1で作成）
+├── cloudrun.tf         # Cloud Run（デプロイ時に作成）
+└── terraform.tfvars    # 変数値（.gitignore対象）
+```
+
+#### 各タスクで必要なTerraformリソース
+
+**タスク2.1実装時に追加**:
+- `google_storage_bucket`: Cloud Storageバケット
+- `google_service_account`: ejan-dev-sa サービスアカウント
+- `google_storage_bucket_iam_member`: バケットへのアクセス権限
+
+**タスク4.1実装時に追加**:
+- `google_cloudfunctions2_function`: Veo3動画生成Function
+- `google_cloudfunctions2_function_iam_member`: Function実行権限
+
+**タスク9.2（デプロイ）時に追加**:
+- `google_cloud_run_v2_service`: APIサーバー
+- `google_cloud_run_service_iam_member`: Cloud Runアクセス権限
+
+#### Terraform実行フロー
+1. リソース定義ファイル（.tf）を作成
+2. `terraform init`で初期化（初回のみ）
+3. `terraform plan`で変更内容を確認
+4. ユーザーが`terraform apply`を実行してリソース作成
+5. `terraform output`で作成されたリソース情報を確認
+6. アプリケーションの環境変数を更新
+
+#### Terraformに関する補足
+- リソースのプレフィックスは"ejan-minimum"とする
+
 
 ### 参考資料の場所
 - **サンプル実装**: `apps/api/samples/`
@@ -103,7 +148,15 @@ npm run test -- --coverage     # テスト実行とカバレッジ（設定時�
 - [x] 2.1 Cloud Storage クライアントのセットアップ
   - **作成場所**: `apps/api/app/core/storage.py`
   - **使用ツール**: `uv add google-cloud-storage`
+  - **Terraformリソース作成**:
+    ```bash
+    # terraform/ディレクトリでリソース定義を作成
+    terraform init
+    terraform plan
+    # ユーザーが実行: terraform apply
+    ```
   - **実装内容**:
+    - Terraformでバケットとサービスアカウントを定義
     - Google Cloud Storage認証設定（サービスアカウントejan-dev-sa使用）
     - バケット接続の確立とテスト
     - サービスアカウント権限の確認
@@ -187,14 +240,21 @@ npm run test -- --coverage     # テスト実行とカバレッジ（設定時�
 - [ ] 4. Cloud Function動画生成サービスの実装
 - [ ] 4.1 Veo3動画生成Functionの作成
   - **作成場所**: `apps/functions/video_generation/main.py`
+  - **Terraformリソース作成**:
+    ```bash
+    # terraform/functions.tfでCloud Functions定義を作成
+    terraform plan
+    # ユーザーが実行: terraform apply
+    ```
   - **実装内容**:
+    - TerraformでCloud Functionsリソースを定義
     - Cloud Functionエントリーポイントの実装 (`def generate_video(request)`)
     - 画像URLとプロンプトの受信処理
     - Veo3 APIの呼び出しロジック (`model="veo-3.0-generate-001"`)
     - Operation IDの取得と管理
     - requirements.txtとデプロイ設定の作成
   - **参考**: `samples/video_generation_with_veo3.py`
-  - **デプロイ**: `gcloud functions deploy generate_video --runtime python311`
+  - **デプロイ**: Terraformで管理（手動デプロイは使用しない）
   - _Requirements: 3.4, 3.5_
 
 - [ ] 4.2 ポーリングとStorage保存処理の実装
@@ -383,6 +443,13 @@ npm run test -- --coverage     # テスト実行とカバレッジ（設定時�
   - _Requirements: 全要件_
 
 - [ ] 9.2 デモ環境での最終調整
+  - **Terraformリソース作成**:
+    ```bash
+    # terraform/cloudrun.tfでCloud Run定義を作成
+    terraform plan
+    # ユーザーが実行: terraform apply
+    terraform output  # リソース情報の確認
+    ```
   - **チェックリスト**:
     - 環境変数の本番設定確認（`.env`、`.env.local`）
     - Cloud Storageアクセス権限の検証（gsutilコマンド）
@@ -393,11 +460,11 @@ npm run test -- --coverage     # テスト実行とカバレッジ（設定時�
     ```
     GOOGLE_API_KEY=実際のAPIキー
     GOOGLE_CLOUD_PROJECT=ejan-demo-project
-    STORAGE_BUCKET=ejan-demo-storage
-    FUNCTION_URL=https://us-central1-ejan-demo.cloudfunctions.net/generate_video
+    STORAGE_BUCKET=ejan-demo-storage  # Terraformのoutputから取得
+    FUNCTION_URL=<Terraformのoutputから取得>
     ```
-  - **デプロイコマンド**:
-    - Backend: `gcloud run deploy ejan-api --source .`
+  - **デプロイ**:
+    - Backend: Terraformで管理（Cloud Run）
     - Frontend: `vercel deploy`
   - **完了時チェック**:
     ```bash
