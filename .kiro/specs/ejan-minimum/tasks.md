@@ -59,7 +59,7 @@ npm run test -- --coverage     # テスト実行とカバレッジ（設定時�
 
 ## 実装タスク一覧
 
-- [ ] 1. バックエンドAPIの基盤構築
+- [x] 1. バックエンドAPIの基盤構築
 - [x] 1.1 FastAPIプロジェクトの初期セットアップ
   - **作成場所**: `apps/api/app/main.py`
   - **使用ツール**: `uv add fastapi uvicorn python-dotenv`
@@ -80,7 +80,7 @@ npm run test -- --coverage     # テスト実行とカバレッジ（設定時�
   - **ドキュメント作成**: `docs/agents/1.1-fastapi-setup.md`に実装詳細を記録
   - _Requirements: 基盤となる設定（全要件の前提）_
 
-- [ ] 1.2 リクエスト/レスポンスのデータモデル定義
+- [x] 1.2 リクエスト/レスポンスのデータモデル定義
   - **作成場所**: `apps/api/app/models/request.py`, `response.py`
   - **使用ツール**: `uv add pydantic`
   - **実装内容**:
