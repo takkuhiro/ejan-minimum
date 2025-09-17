@@ -6,6 +6,10 @@ terraform {
       source  = "hashicorp/google"
       version = "~> 5.0"
     }
+    archive = {
+      source  = "hashicorp/archive"
+      version = "~> 2.4"
+    }
   }
 
   # Backend configuration for state storage
@@ -29,7 +33,7 @@ resource "google_project_service" "required_apis" {
     "aiplatform.googleapis.com",
     "cloudfunctions.googleapis.com",
     "cloudbuild.googleapis.com"
-    # "cloudrun.googleapis.com"  # タスク9.2で追加予定
+    # "cloudrun.googleapis.com"  # 個別に有効化が必要
   ])
 
   service            = each.value
@@ -62,6 +66,25 @@ module "iam" {
   depends_on = [
     google_project_service.required_apis,
     module.storage
+  ]
+}
+
+# Functions module
+module "functions" {
+  source = "../../modules/functions"
+
+  project_id            = var.project_id
+  environment           = local.environment
+  region                = var.region
+  google_api_key        = var.google_api_key
+  storage_bucket_name   = module.storage.bucket_name
+  service_account_email = module.iam.service_account_email
+  force_destroy         = true  # Allow destruction in dev environment
+
+  depends_on = [
+    google_project_service.required_apis,
+    module.storage,
+    module.iam
   ]
 }
 

@@ -28,3 +28,13 @@ output "environment" {
   description = "The deployment environment"
   value       = local.environment
 }
+
+output "video_generation_function_url" {
+  description = "Video generation Cloud Function URL"
+  value       = module.functions.video_generation_function_url
+}
+
+output "video_generation_function_name" {
+  description = "Video generation Cloud Function name"
+  value       = module.functions.video_generation_function_name
+}

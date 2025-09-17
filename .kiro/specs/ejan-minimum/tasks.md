@@ -71,7 +71,7 @@ terraform/
 
 **タスク2.1実装時に追加**:
 - `google_storage_bucket`: Cloud Storageバケット
-- `google_service_account`: ejan-dev-sa サービスアカウント
+- `google_service_account`: ejan-minimum-dev-sa サービスアカウント
 - `google_storage_bucket_iam_member`: バケットへのアクセス権限
 
 **タスク4.1実装時に追加**:
@@ -157,7 +157,7 @@ terraform/
     ```
   - **実装内容**:
     - Terraformでバケットとサービスアカウントを定義
-    - Google Cloud Storage認証設定（サービスアカウントejan-dev-sa使用）
+    - Google Cloud Storage認証設定（サービスアカウントejan-minimum-dev-sa使用）
     - バケット接続の確立とテスト
     - サービスアカウント権限の確認
     - 環境変数からのバケット名取得 (`STORAGE_BUCKET`)
@@ -237,8 +237,8 @@ terraform/
   - **response_schema例**: `list[MakeupStep]`形式
   - _Requirements: 3.1, 3.2_
 
-- [ ] 4. Cloud Function動画生成サービスの実装
-- [ ] 4.1 Veo3動画生成Functionの作成
+- [x] 4. Cloud Function動画生成サービスの実装
+- [x] 4.1 Veo3動画生成Functionの作成
   - **作成場所**: `apps/functions/video_generation/main.py`
   - **Terraformリソース作成**:
     ```bash
@@ -257,7 +257,7 @@ terraform/
   - **デプロイ**: Terraformで管理（手動デプロイは使用しない）
   - _Requirements: 3.4, 3.5_
 
-- [ ] 4.2 ポーリングとStorage保存処理の実装
+- [x] 4.2 ポーリングとStorage保存処理の実装
   - **作成場所**: 同上 (`apps/functions/video_generation/main.py`)
   - **実装内容**:
     - 10秒間隔のステータスポーリングロジック (`time.sleep(10)`)

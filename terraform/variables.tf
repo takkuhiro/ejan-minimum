@@ -1,18 +1,20 @@
+# 変数定義
+
 variable "project_id" {
-  description = "The GCP project ID"
+  description = "Google Cloud Project ID"
   type        = string
 }
 
 variable "region" {
-  description = "The default region for resources"
+  description = "Google Cloud Region"
   type        = string
-  default     = "us-central1"
+  default     = "asia-northeast1"
 }
 
-variable "storage_location" {
-  description = "Location for Cloud Storage bucket"
+variable "zone" {
+  description = "Google Cloud Zone"
   type        = string
-  default     = "US"
+  default     = "asia-northeast1-a"
 }
 
 variable "google_api_key" {

@@ -129,7 +129,7 @@ Last updated: 2025-09-17 - Reflects current implementation status
 - **アプリケーション構造**: `apps/{web,api}` (frontendやbackendではない)
 - **Python環境**: uvを使用（pip/venvではなく）
 - **データ管理**: 検証環境のため、画像・動画データは削除せずCloud Storageに保存
-- **サービスアカウント**: 開発環境では単一のサービスアカウント`ejan-dev-sa`を使用
+- **サービスアカウント**: 開発環境では単一のサービスアカウント`ejan-minimum-dev-sa`を使用
   - Google Cloud リソース（Storage, SQL）とFirebase認証の両方に使用
   - 本番環境では用途別に分離予定
 

@@ -11,7 +11,7 @@ class StorageClient:
 
     This client manages the connection to Google Cloud Storage and provides
     access to bucket operations. It uses service account authentication
-    (ejan-dev-sa) for accessing GCS resources.
+    (ejan-minimum-dev-sa) for accessing GCS resources.
 
     Attributes:
         bucket_name: Name of the GCS bucket from STORAGE_BUCKET env var
@@ -30,7 +30,7 @@ class StorageClient:
 
         # Initialize the Google Cloud Storage client
         # It will use GOOGLE_APPLICATION_CREDENTIALS or default credentials
-        # Service account: ejan-dev-sa
+        # Service account: ejan-minimum-dev-sa
         self.client = storage.Client()
 
     def get_bucket(self) -> Bucket:  # type: ignore[no-any-unimported]
