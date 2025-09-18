@@ -464,7 +464,7 @@ terraform/
   - **ドキュメント作成**: `docs/agents/8.1-unit-tests.md`にテスト戦略を記録
   - _Requirements: 品質保証のため_
 
-- [ ] 8.2 API統合テストの実装
+- [x] 8.2 API統合テストの実装
   - **作成場所**: `apps/api/tests/integration/`
   - **使用ツール**: `uv add --dev httpx`
   - **テスト内容**:

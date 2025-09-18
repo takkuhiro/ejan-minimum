@@ -7,6 +7,8 @@ import {
   StyleDetailResponse,
   ApiError,
   ApiResponse,
+  GenerateCustomStyleRequest,
+  GenerateCustomStyleResponse,
 } from "@/types/api";
 
 export interface ApiClientConfig {
@@ -244,6 +246,18 @@ export class ApiClient {
       },
     );
   }
+
+  async generateCustomStyle(
+    request: GenerateCustomStyleRequest,
+    options?: RequestOptions,
+  ): Promise<ApiResponse<GenerateCustomStyleResponse>> {
+    return this.request<GenerateCustomStyleResponse>("/api/styles/customize", {
+      method: "POST",
+      body: JSON.stringify(request),
+      signal: options?.signal,
+      maxRetries: options?.maxRetries || 1,
+    });
+  }
 }
 
 // Singleton instance
@@ -274,4 +288,9 @@ export const apiClient = {
 
   getTutorialStatus: (tutorialId: string, options?: RequestOptions) =>
     getApiClient().getTutorialStatus(tutorialId, options),
+
+  generateCustomStyle: (
+    request: GenerateCustomStyleRequest,
+    options?: RequestOptions,
+  ) => getApiClient().generateCustomStyle(request, options),
 };

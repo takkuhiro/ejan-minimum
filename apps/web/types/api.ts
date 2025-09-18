@@ -61,6 +61,21 @@ export interface StyleDetailResponse {
   };
 }
 
+// Custom style generation request
+export interface GenerateCustomStyleRequest {
+  styleId?: string;
+  customRequest: string;
+  isFromScratch?: boolean;
+}
+
+// Custom style generation response
+export interface GenerateCustomStyleResponse {
+  style: Style & {
+    steps?: string[];
+    tools?: string[];
+  };
+}
+
 // Error response
 export interface ApiError {
   error: string;

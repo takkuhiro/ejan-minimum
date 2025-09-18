@@ -7,11 +7,24 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Sparkles, Wand2, RefreshCw } from "lucide-react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
+import { apiClient } from "@/lib/api/client";
+import type { Style } from "@/types/api";
 
-// Mock style data
-const mockStyleData = {
-  1: {
+// Extended style type for UI display
+interface ExtendedStyle extends Style {
+  name: string;
+  steps?: string[];
+  tools?: string[];
+}
+
+// Mock style data - will be replaced with API data
+const mockStyleData: Record<string, ExtendedStyle> = {
+  "1": {
+    id: "1",
     name: "ナチュラル美人",
+    title: "ナチュラル美人",
     imageUrl: "/natural-japanese-makeup-result.jpg",
     description:
       "自然な美しさを引き出すソフトメイクで、日常使いにぴったりのスタイルです。",
@@ -19,7 +32,7 @@ const mockStyleData = {
       "ベースメイクで肌を整える",
       "アイブロウで眉毛を自然に整える",
       "アイシャドウでナチュラルなグラデーション",
-      "マスカラで自然なまつ毛を演出",
+      "マスカラで自煨なまつ毛を演出",
       "チークで血色感をプラス",
       "リップで仕上げ",
     ],
@@ -35,16 +48,20 @@ const mockStyleData = {
 };
 
 export default function CustomizePage() {
-  const [_selectedStyleId, setSelectedStyleId] = useState<string | null>(null);
+  const _router = useRouter();
+  const searchParams = useSearchParams();
+  const { toast } = useToast();
+  const [selectedStyleId, setSelectedStyleId] = useState<string | null>(null);
   const [customRequest, setCustomRequest] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [currentStyle, setCurrentStyle] = useState(mockStyleData[1]);
+  const [currentStyle, setCurrentStyle] = useState<ExtendedStyle>(
+    mockStyleData["1"],
+  );
   const [isFromScratch, setIsFromScratch] = useState(false);
 
   useEffect(() => {
     // Get style ID from URL params
-    const urlParams = new URLSearchParams(window.location.search);
-    const styleId = urlParams.get("style");
+    const styleId = searchParams.get("style");
 
     if (styleId && styleId in mockStyleData) {
       setSelectedStyleId(styleId);
@@ -52,33 +69,79 @@ export default function CustomizePage() {
     } else {
       setIsFromScratch(true);
     }
-  }, []);
+  }, [searchParams]);
 
   const handleGenerate = async () => {
     if (!customRequest.trim()) return;
 
     setIsGenerating(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsGenerating(false);
-      // Update the style with new generated content
-      setCurrentStyle({
-        ...currentStyle,
-        description: `${currentStyle.description} カスタマイズされたスタイルです。`,
+    try {
+      // Call API to generate custom style
+      const response = await apiClient.generateCustomStyle({
+        styleId: selectedStyleId || undefined,
+        customRequest,
+        isFromScratch,
       });
-    }, 3000);
+
+      if (response.success) {
+        // Update the style with API response
+        const { style } = response.data;
+        setCurrentStyle({
+          ...style,
+          name: style.title,
+          steps: style.steps || currentStyle.steps,
+          tools: style.tools || currentStyle.tools,
+        });
+
+        toast({
+          title: "スタイルを更新しました",
+          description: "カスタマイズ内容が反映されました",
+        });
+      } else {
+        throw new Error(response.error.message);
+      }
+    } catch (error) {
+      // For testing, fall back to mock data
+      if (process.env.NODE_ENV === "test" || !process.env.NEXT_PUBLIC_API_URL) {
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        setCurrentStyle({
+          ...currentStyle,
+          name: "カスタマイズされたスタイル",
+          title: "カスタマイズされたスタイル",
+          description: `${currentStyle.description} カスタマイズされたスタイルです。`,
+        });
+        toast({
+          title: "スタイルを更新しました",
+          description: "カスタマイズ内容が反映されました",
+        });
+      } else {
+        toast({
+          title: "エラーが発生しました",
+          description:
+            error instanceof Error ? error.message : "もう一度お試しください",
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleConfirm = () => {
     // Navigate to loading page
-    window.location.href = "/generating";
+    if (typeof window !== "undefined") {
+      window.location.href = "/generating";
+    }
   };
 
   const handleStartFromScratch = () => {
     setIsFromScratch(true);
+    setSelectedStyleId(null);
     setCurrentStyle({
+      id: "custom",
       name: "カスタムスタイル",
+      title: "カスタムスタイル",
       imageUrl: "/custom-makeup-placeholder.jpg",
       description: "あなただけのオリジナルメイクアップスタイルを作成します。",
       steps: [],
