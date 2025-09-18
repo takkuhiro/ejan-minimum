@@ -40,6 +40,7 @@ class AIClient:
     SUPPORTED_MODELS = [
         "gemini-2.5-flash",
         "gemini-2.5-flash-image-preview",
+        "gemini-2.0-flash-lite",
         "veo-3.0-generate-001",
     ]
 

@@ -87,7 +87,7 @@ async def generate_styles(request: GenerateStylesRequest) -> GenerateStylesRespo
 
         # Generate styles using the service
         service = StyleGenerationService()
-        styles = await service.generate_styles(
+        styles, original_image_url = await service.generate_styles(
             photo_bytes=photo_bytes, gender=service_gender, count=3
         )
 
@@ -96,7 +96,10 @@ async def generate_styles(request: GenerateStylesRequest) -> GenerateStylesRespo
             generated_styles_store[style.id] = style
 
         # Convert to response format
-        response = GenerateStylesResponse(styles=styles)
+        response = GenerateStylesResponse(
+            styles=styles,
+            originalImageUrl=original_image_url,  # Using alias
+        )
 
         return response
 

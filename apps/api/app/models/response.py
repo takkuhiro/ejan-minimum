@@ -25,6 +25,11 @@ class GeneratedStyle(BaseModel):
         ...,
         description="Description of the style",
     )
+    raw_description: Optional[str] = Field(
+        None,
+        description="Raw description from the image generation model",
+        alias="rawDescription",
+    )
     image_url: str = Field(
         ..., description="URL to the generated style image", alias="imageUrl"
     )
@@ -72,6 +77,13 @@ class GenerateStylesResponse(BaseModel):
         min_length=1,
         description="List of generated styles",
     )
+    original_image_url: Optional[str] = Field(
+        None,
+        description="URL to the original uploaded image",
+        alias="originalImageUrl",
+    )
+
+    model_config = {"populate_by_name": True}
 
     @field_validator("styles")
     @classmethod
@@ -79,6 +91,16 @@ class GenerateStylesResponse(BaseModel):
         """Validate that styles list is not empty."""
         if not v:
             raise ValueError("Styles list cannot be empty")
+        return v
+
+    @field_validator("original_image_url")
+    @classmethod
+    def validate_original_url(cls, v: Optional[str]) -> Optional[str]:
+        """Validate that original_image_url is a valid URL if provided."""
+        if v is None:
+            return v
+        if not (v.startswith("http://") or v.startswith("https://")):
+            raise ValueError("Invalid URL format for original image")
         return v
 
 

@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api/client";
+import { truncateTitle, truncateDescription } from "@/lib/utils";
 import type { Style } from "@/types/api";
 
 // Extended style type for UI display
@@ -89,7 +90,7 @@ export default function CustomizePage() {
         const { style } = response.data;
         setCurrentStyle({
           ...style,
-          name: style.title,
+          name: truncateTitle(style.title, 15),
           steps: style.steps || currentStyle.steps,
           tools: style.tools || currentStyle.tools,
         });
@@ -200,7 +201,7 @@ export default function CustomizePage() {
                   className="w-full h-64 object-cover rounded-lg mb-4"
                 />
                 <p className="text-muted-foreground mb-4">
-                  {currentStyle.description}
+                  {truncateDescription(currentStyle.description, 50)}
                 </p>
 
                 {currentStyle.steps.length > 0 && (

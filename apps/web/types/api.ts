@@ -14,12 +14,14 @@ export interface Style {
   id: string;
   title: string;
   description: string;
+  rawDescription?: string;
   imageUrl: string;
 }
 
 // Style generation response
 export interface GenerateStylesResponse {
   styles: Style[];
+  originalImageUrl?: string;
 }
 
 // Tutorial generation request

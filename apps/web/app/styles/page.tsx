@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Plus, Sparkles, Check, Clock, Wand2 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api/client";
 import {
@@ -21,14 +21,14 @@ import {
   isServerError,
   retryWithBackoff,
 } from "@/lib/api/error-handler";
+import { truncateTitle, truncateDescription } from "@/lib/utils";
 import type { Style, StyleDetailResponse } from "@/types/api";
 
 export default function StyleSelectionPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const [styles, setStyles] = useState<Style[]>([]);
-  const [userPhotoUrl, setUserPhotoUrl] = useState<string | null>(null);
+  const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<Style | null>(null);
   const [selectedStyleDetails, setSelectedStyleDetails] = useState<
     StyleDetailResponse["style"] | null
@@ -40,54 +40,35 @@ export default function StyleSelectionPage() {
     new Set(),
   );
 
-  // Load styles and photo from URL params or localStorage on mount
+  // Load styles and original image from localStorage on mount
   useEffect(() => {
-    const loadStyleData = () => {
-      // Try URL params first
-      const stylesParam = searchParams.get("styles");
-      const photoParam = searchParams.get("photo");
+    const savedStyles = localStorage.getItem("generatedStyles");
+    const savedOriginalUrl = localStorage.getItem("originalImageUrl");
 
-      if (stylesParam && photoParam) {
-        try {
-          const decodedStyles = JSON.parse(decodeURIComponent(stylesParam));
-          setStyles(decodedStyles);
-          setUserPhotoUrl(decodeURIComponent(photoParam));
+    // Debug: Log localStorage values
+    console.log("Saved styles:", savedStyles);
+    console.log("Saved original URL:", savedOriginalUrl);
 
-          // Save to localStorage as backup
-          localStorage.setItem(
-            "generatedStyles",
-            JSON.stringify(decodedStyles),
-          );
-          localStorage.setItem("userPhoto", decodeURIComponent(photoParam));
-        } catch (error) {
-          console.error("Error parsing URL params:", error);
-          loadFromLocalStorage();
+    if (savedStyles) {
+      try {
+        setStyles(JSON.parse(savedStyles));
+        if (savedOriginalUrl) {
+          setOriginalImageUrl(savedOriginalUrl);
+          console.log("Set original image URL:", savedOriginalUrl);
+        } else {
+          console.warn("No original URL found in localStorage");
         }
-      } else {
-        // Fallback to localStorage
-        loadFromLocalStorage();
+      } catch (error) {
+        console.error("Error parsing localStorage styles:", error);
+        toast.error("スタイル情報の読み込みに失敗しました");
+        router.push("/");
       }
-    };
-
-    const loadFromLocalStorage = () => {
-      const savedStyles = localStorage.getItem("generatedStyles");
-      const savedPhoto = localStorage.getItem("userPhoto");
-
-      if (savedStyles) {
-        try {
-          setStyles(JSON.parse(savedStyles));
-        } catch (error) {
-          console.error("Error parsing localStorage styles:", error);
-        }
-      }
-
-      if (savedPhoto) {
-        setUserPhotoUrl(savedPhoto);
-      }
-    };
-
-    loadStyleData();
-  }, [searchParams]);
+    } else {
+      // No styles found, redirect to home
+      toast.error("スタイル情報が見つかりません");
+      router.push("/");
+    }
+  }, [router]);
 
   const handleStyleSelect = async (style: Style) => {
     setSelectedStyle(style);
@@ -133,18 +114,8 @@ export default function StyleSelectionPage() {
   };
 
   const handleCustomize = () => {
-    // Navigate to customization page with styles and photo
-    const params = new URLSearchParams();
-    if (styles.length > 0) {
-      params.set("styles", encodeURIComponent(JSON.stringify(styles)));
-    }
-    if (userPhotoUrl) {
-      params.set("photo", encodeURIComponent(userPhotoUrl));
-    }
-
-    const url = new URL("/customize", window.location.origin);
-    params.forEach((value, key) => url.searchParams.set(key, value));
-    router.push(url.pathname + url.search);
+    // Navigate to customization page
+    router.push("/customize");
   };
 
   const handleConfirmSelection = async () => {
@@ -263,31 +234,39 @@ export default function StyleSelectionPage() {
           <div className="w-20" /> {/* Spacer for centering */}
         </div>
 
-        {/* Original Photo */}
-        {userPhotoUrl && (
+        {/* Original Image Display */}
+        {originalImageUrl && (
           <div className="mb-8">
-            <Card className="max-w-sm mx-auto">
-              <CardHeader>
-                <CardTitle className="text-center text-lg">
-                  あなたの写真
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="relative w-full h-48 overflow-hidden rounded-lg">
+            <h2 className="text-xl font-semibold text-center mb-4">
+              アップロードした画像
+            </h2>
+            <div className="max-w-md mx-auto">
+              <Card className="overflow-hidden">
+                <div className="relative w-full h-80">
                   <Image
-                    src={userPhotoUrl}
-                    alt="あなたの写真"
+                    src={originalImageUrl}
+                    alt="アップロードした画像"
                     fill
                     className="object-cover"
-                    priority
+                    onError={(e) => {
+                      console.error("Failed to load original image:", originalImageUrl);
+                      console.error("Error event:", e);
+                      setOriginalImageUrl(null);
+                    }}
                   />
                 </div>
-              </CardContent>
-            </Card>
+              </Card>
+            </div>
           </div>
         )}
 
         {/* Style Options */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-center mb-4">
+            生成されたスタイル
+          </h2>
+        </div>
+
         {styles.length > 0 ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {styles.map((style) => (
@@ -326,9 +305,9 @@ export default function StyleSelectionPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <CardTitle className="text-lg mb-2">{style.title}</CardTitle>
+                  <CardTitle className="text-lg mb-2">{truncateTitle(style.title, 12)}</CardTitle>
                   <p className="text-sm text-muted-foreground mb-3">
-                    {style.description}
+                    {truncateDescription(style.description, 35)}
                   </p>
 
                   {/* Display style details if selected and loaded */}

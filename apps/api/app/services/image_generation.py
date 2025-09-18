@@ -9,6 +9,7 @@ from io import BytesIO
 import time
 
 from PIL import Image
+from pydantic import BaseModel, Field
 
 from app.services.ai_client import AIClient, AIClientAPIError
 from app.services.storage import StorageService
@@ -39,15 +40,28 @@ class StyleGeneration:
     id: str
     title: str
     description: str
+    raw_description: str
     image_url: str
 
 
-# Style variations for different looks
-STYLE_VARIATIONS = [
-    "Natural daytime look with subtle enhancements",
-    "Elegant evening style with sophisticated makeup",
-    "Bold and trendy party look with dramatic features",
-]
+class JapaneseStyleInfo(BaseModel):
+    """Model for Japanese style information."""
+
+    title: str = Field(description="日本語のタイトル（10文字以内）")
+    description: str = Field(description="日本語の説明文（30文字以内）")
+
+
+STYLE_VARIATIONS = {
+    "male0": "Fresh and Natural Style Hair: A neat, short haircut in a natural color. The front is kept down slightly to create a light, effortless feel. Use minimal wax to maintain the hair's natural flow. Makeup: Focus on grooming. Tidy the eyebrows and use lip balm to prevent dryness. Avoid foundation and keep the skin tone even for a healthy appearance.",
+    "male1": "Sophisticated and Conservative Style Hair: Dark, short hair with a sleek side part or slicked-back style. A glossy finish adds a polished, intelligent impression. Makeup: Fill in sparse areas of the eyebrows for a defined shape. Use a translucent powder to control shine and maintain a clean look.",
+    "male2": "Soft and Casual Style Hair: A light mushroom cut or a slightly longer wolf cut. Ash or beige hair colors will soften the overall look. Makeup: Use an eyebrow pencil to match the hair color and a light BB cream to even out the skin. A tinted lip balm adds a healthy flush of color.",
+    "female0": "Elegant and Feminine Style Hair: A sleek, glossy long hairstyle or a soft, inward-curling bob. The bangs can be swept to the side or kept as a see-through fringe for a lighter feel. Makeup: A dewy, translucent base. Use soft, skin-tone eyeshadows like beige or pale pink. A glossy finish on the lips gives a natural, fresh look.",
+    "feamle1": "Cool and Professional Style Hair: A sharp chin-length bob or a medium-length style with swept-back bangs. Dark hair colors create a sophisticated and composed impression. Makeup: A matte foundation. A sharp winged eyeliner adds a cool edge, while nude or deep-colored lipstick enhances the mature, elegant vibe.",
+    "female2": "Cute and Doll-like Style Hair: A cute outward or inward-curling bob with straight-across bangs. Adding highlights can create a fun, dimensional look. Makeup: Use glittery eyeshadows and highlight the undereye bags (aegyo sal) for a sparkling effect. Pink or coral blush on the apples of the cheeks and a cute-colored lipstick complete the youthful look.",
+    "neutral0": "Natural and Androgynous Style Hair: A versatile mushroom short cut or a short style that exposes the ears. Dark hair colors contribute to a cool and neutral look. Makeup: Focus on skin prep and grooming. Use moisturizers on dry areas to create a healthy glow, and simply groom the eyebrows for a clean finish.",
+    "neutral1": "Cool and Edgy Style Hair: A wet-look short cut or a two-block undercut with shaved sides. These styles are distinct yet cohesive. Makeup: A matte base and a sharp contour to define the face. A slightly winged eyeliner and a matte lip color that subdues natural tones will enhance a sleek, modern look.",
+    "neutral2": "Soft and Feminine Style Hair: A soft perm or a slightly longer wolf cut. Lighter hair colors create a gentle and relaxed atmosphere. Makeup: A dewy foundation with soft, sheer eyeshadows and blush in pink or orange tones. A glossy lip adds a touch of femininity and warmth.",
+}
 
 
 def generate_style_prompt(
@@ -64,7 +78,8 @@ def generate_style_prompt(
         Generated prompt string.
     """
     # Ensure style_index is within bounds
-    style_variation = STYLE_VARIATIONS[style_index % len(STYLE_VARIATIONS)]
+    key = f"{gender.value}{style_index}"
+    style_variation = STYLE_VARIATIONS[key]
 
     # Gender-specific language
     gender_text = {
@@ -74,10 +89,10 @@ def generate_style_prompt(
     }[gender]
 
     base_prompt = f"""Generate a realistic image of the given face photo with a perfect {gender_text} hairstyle and makeup style.
-{style_variation}
+STYLE: {style_variation}
 Please make the style natural and in line with current trends. Avoid anything too bizarre or extreme.
 Keep the facial features and identity unchanged, only modify the hairstyle and makeup.
-Provide a brief description of the style and steps to achieve this look."""
+Provide a brief description of the style and steps to achieve this look and you must generate the image."""
 
     if custom_text:
         base_prompt += f"\n\nAdditional request: {custom_text}"
@@ -98,6 +113,7 @@ class ImageGenerationService:
         self.ai_client = ai_client
         self.storage_service = storage_service
         self.model_name = "gemini-2.5-flash-image-preview"
+        self.sub_model_name = "gemini-2.0-flash-lite"
 
     async def generate_single_style(
         self,
@@ -120,60 +136,118 @@ class ImageGenerationService:
         Raises:
             ImageGenerationError: If generation fails.
         """
-        try:
-            # Generate prompt
-            prompt = generate_style_prompt(gender, style_index, custom_text)
+        max_retries = 3
+        retry_count = 0
+        base_sleep_time = 2  # Base sleep time in seconds
 
-            # Debug: Check image before passing to API
-            print("-------- generate_single_style start --------")
-            print(f"Image type: {type(image)}")
-            if hasattr(image, "size"):
-                print(f"Image size: {image.size}")
-            if hasattr(image, "mode"):
-                print(f"Image mode: {image.mode}")
-            print(f"Prompt preview: {prompt[:100]}...")
-
-            # Call AI API
-            response = self.ai_client.generate_content(
-                model=self.model_name,
-                prompt=prompt,
-                image=image,
-            )
-            print("-------- generate_single_style end --------")
-
-            # Extract text description
-            description = self.ai_client.extract_text_from_response(response)
-            if not description:
-                description = f"Style {style_index + 1} for {gender.value}"
-
-            # Extract generated image
-            image_data = self.ai_client.extract_image_from_response(response)
-            if not image_data:
-                raise ImageGenerationError("No image generated by AI")
-
-            # Upload to storage
+        while retry_count < max_retries:
             try:
-                # Determine content type
-                content_type = "image/png"
-                image_url = self.storage_service.upload_image(image_data, content_type)
+                # Generate prompt
+                prompt = generate_style_prompt(gender, style_index, custom_text)
+
+                # Call AI API
+                response = self.ai_client.generate_content(
+                    model=self.model_name,
+                    prompt=prompt,
+                    image=image,
+                )
+
+                # Extract raw description from main model
+                raw_description = self.ai_client.extract_text_from_response(response)
+                print(f"raw_description: {raw_description}")
+                if not raw_description:
+                    raw_description = f"Style {style_index + 1} for {gender.value}"
+
+                # Generate Japanese title and description using sub model
+                try:
+                    japanese_response = self.ai_client.client.models.generate_content(
+                        model=self.sub_model_name,
+                        contents=f"""以下の英語のスタイル説明を日本語に翻訳し、魅力的なタイトル（10文字以内）と説明文（30文字以内）を生成してください。
+                        タイトルはキャッチーで覚えやすいものにしてください。
+                        説明文は簡潔でわかりやすくしてください。
+
+                        英語の説明:
+                        {raw_description}""",
+                        config={
+                            "response_mime_type": "application/json",
+                            "response_schema": JapaneseStyleInfo,
+                        },
+                    )
+                    japanese_info: JapaneseStyleInfo = japanese_response.parsed
+                    title = japanese_info.title
+                    description = japanese_info.description
+                    print(f"Japanese title: {title}, description: {description}")
+                except Exception as e:
+                    print(f"Failed to generate Japanese text: {e}")
+                    # Fallback to extracting from raw description
+                    title = (
+                        self.extract_title_from_description(raw_description)
+                        or f"スタイル{style_index + 1}"
+                    )
+                    description = (
+                        raw_description[:30]
+                        if raw_description
+                        else f"{gender.value}スタイル"
+                    )
+
+                # Extract generated image
+                image_data = self.ai_client.extract_image_from_response(response)
+                if not image_data:
+                    retry_count += 1
+                    if retry_count < max_retries:
+                        # Calculate exponential backoff with max limit
+                        sleep_time = min(base_sleep_time * (2 ** (retry_count - 1)), 20)
+                        print(
+                            f"No image generated, retrying in {sleep_time}s... (attempt {retry_count}/{max_retries})"
+                        )
+                        time.sleep(sleep_time)
+                        continue
+                    else:
+                        raise ImageGenerationError(
+                            f"No image generated after {max_retries} attempts"
+                        )
+
+                # Upload to storage
+                try:
+                    # Determine content type
+                    content_type = "image/png"
+                    image_url = self.storage_service.upload_image(
+                        image_data, content_type
+                    )
+                except Exception as e:
+                    raise ImageGenerationError(f"Failed to upload image: {e}")
+
+                # Create style object
+                style_id = str(uuid.uuid4())
+
+                return StyleGeneration(
+                    id=style_id,
+                    title=title,
+                    description=description,
+                    raw_description=raw_description,
+                    image_url=image_url,
+                )
+
+            except AIClientAPIError as e:
+                # Handle 500 errors with retry
+                if "500" in str(e) or "INTERNAL" in str(e):
+                    retry_count += 1
+                    if retry_count < max_retries:
+                        # Calculate exponential backoff with max limit
+                        sleep_time = min(base_sleep_time * (2**retry_count), 20)
+                        print(
+                            f"AI API returned 500 error, retrying in {sleep_time}s... (attempt {retry_count}/{max_retries})"
+                        )
+                        time.sleep(sleep_time)
+                        continue
+                raise ImageGenerationError(f"AI generation failed: {e}")
+            except ImageGenerationError:
+                raise  # Re-raise our own errors
             except Exception as e:
-                raise ImageGenerationError(f"Failed to upload image: {e}")
+                raise ImageGenerationError(f"Unexpected error: {e}")
 
-            # Create style object
-            style_id = str(uuid.uuid4())
-            title = (
-                self.extract_title_from_description(description)
-                or f"Style {style_index + 1}"
-            )
-
-            return StyleGeneration(
-                id=style_id, title=title, description=description, image_url=image_url
-            )
-
-        except AIClientAPIError as e:
-            raise ImageGenerationError(f"AI generation failed: {e}")
-        except Exception as e:
-            raise ImageGenerationError(f"Unexpected error: {e}")
+        # Should never reach here, but for type safety
+        raise ImageGenerationError("Failed to generate style after all retries")
 
     async def generate_three_styles(
         self, image: Image.Image, gender: Gender, custom_text: Optional[str] = None
@@ -186,10 +260,10 @@ class ImageGenerationService:
             custom_text: Optional custom request text.
 
         Returns:
-            List of three generated styles.
+            List of generated styles (at least one).
 
         Raises:
-            ImageGenerationError: If generation fails.
+            ImageGenerationError: If all generation attempts fail.
         """
         styles = []
         errors = []
@@ -202,13 +276,21 @@ class ImageGenerationService:
                 styles.append(style)
             except ImageGenerationError as e:
                 errors.append(f"Style {i+1}: {e}")
-            time.sleep(1)  # wait for rate limit
+                print(f"Failed to generate style {i+1}: {e}")
 
-        if len(styles) < 3:
-            error_msg = "Failed to generate all styles. " + " ".join(errors)
-            raise ImageGenerationError(error_msg)
+            # Add delay between API calls to avoid rate limiting
+            if i < 2:  # Don't sleep after last iteration
+                time.sleep(2)  # Increased delay
 
-        return styles
+        # Return partial results if we have at least one successful generation
+        if len(styles) > 0:
+            if len(styles) < 3:
+                print(f"Generated {len(styles)}/3 styles. Errors: {', '.join(errors)}")
+            return styles
+
+        # Only raise error if all attempts failed
+        error_msg = "Failed to generate any styles. " + " ".join(errors)
+        raise ImageGenerationError(error_msg)
 
     async def process_upload_and_generate(
         self, base64_photo: str, gender: Gender, custom_text: Optional[str] = None

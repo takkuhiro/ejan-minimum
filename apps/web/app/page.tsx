@@ -100,9 +100,27 @@ export default function WelcomePage() {
 
       if (response.success) {
         toast.success("スタイル生成に成功しました！");
-        // Navigate to styles page with generated data
-        const encodedData = encodeURIComponent(JSON.stringify(response.data));
-        router.push(`/styles?data=${encodedData}`);
+
+        // Debug: Log the response to check originalImageUrl
+        console.log("API Response:", response.data);
+        console.log("Original Image URL:", response.data.originalImageUrl);
+
+        // Store styles and original image URL in localStorage
+        localStorage.setItem(
+          "generatedStyles",
+          JSON.stringify(response.data.styles),
+        );
+        if (response.data.originalImageUrl) {
+          localStorage.setItem(
+            "originalImageUrl",
+            response.data.originalImageUrl,
+          );
+        } else {
+          console.warn("No originalImageUrl in response");
+        }
+
+        // Navigate to styles page
+        router.push("/styles");
       } else {
         // Handle specific error types
         const error = response.error;

@@ -297,7 +297,7 @@ describe("CustomizePage", () => {
   describe("API Integration", () => {
     beforeEach(() => {
       // Set environment to test mode (which uses fallback in component)
-      process.env.NODE_ENV = 'test';
+      process.env.NODE_ENV = "test";
     });
 
     it("should call API when generate button is clicked", async () => {
@@ -356,11 +356,14 @@ describe("CustomizePage", () => {
       fireEvent.click(generateButton);
 
       // Wait for the fallback mock data (since NODE_ENV is 'test')
-      await waitFor(() => {
-        expect(
-          screen.getByText("カスタマイズされたスタイル"),
-        ).toBeInTheDocument();
-      }, { timeout: 4000 });
+      await waitFor(
+        () => {
+          expect(
+            screen.getByText("カスタマイズされたスタイル"),
+          ).toBeInTheDocument();
+        },
+        { timeout: 4000 },
+      );
     });
 
     it("should handle API errors gracefully", async () => {
@@ -387,9 +390,14 @@ describe("CustomizePage", () => {
       });
 
       // Wait for fallback to complete
-      await waitFor(() => {
-        expect(screen.getByText("カスタマイズされたスタイル")).toBeInTheDocument();
-      }, { timeout: 4000 });
+      await waitFor(
+        () => {
+          expect(
+            screen.getByText("カスタマイズされたスタイル"),
+          ).toBeInTheDocument();
+        },
+        { timeout: 4000 },
+      );
     });
   });
 });
