@@ -327,7 +327,7 @@ terraform/
   - **レスポンス形式**: `{"styles": [{id, title, description, imageUrl}]}`
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7_
 
-- [ ] 5.2 チュートリアル生成エンドポイントの構築
+- [x] 5.2 チュートリアル生成エンドポイントの構築
   - **作成場所**: `apps/api/app/api/routes/tutorials.py`
   - **実装内容**:
     - POST /api/tutorials/generateの実装
@@ -347,6 +347,15 @@ terraform/
     - 必要な道具リストと説明の返却
     - 404エラー処理
   - **キャッシュ**: デモ環境のため、メモリ内辞書で管理
+  - **完了時チェック**:
+    ```bash
+    uv run black app
+    uv run ruff check app
+    uv run mypy app
+    uv run pytest tests
+    # すべてが完全にパスすることを確認
+    ```
+  - **ドキュメント作成**: `docs/agents/5.3-**.md`に実装詳細を記録
   - _Requirements: 2.1, 2.2_
 
 - [ ] 6. フロントエンド・バックエンド統合

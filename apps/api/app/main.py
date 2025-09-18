@@ -13,7 +13,7 @@ import logging
 from typing import Any, Dict, AsyncGenerator
 
 from app.core.config import settings
-from app.api.routes import styles
+from app.api.routes import styles, tutorials
 
 # Configure logging
 logging.basicConfig(
@@ -128,5 +128,4 @@ async def health_check() -> Dict[str, Any]:
 
 # Include API routes
 app.include_router(styles.router)
-# from app.api.routes import tutorials
-# app.include_router(tutorials.router, prefix="/api/tutorials", tags=["Tutorials"])
+app.include_router(tutorials.router)

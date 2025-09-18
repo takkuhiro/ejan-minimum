@@ -6,7 +6,6 @@ from io import BytesIO
 
 import pytest
 from PIL import Image
-from google.genai import types
 
 from app.services.image_generation import (
     ImageGenerationService,
@@ -106,7 +105,7 @@ class TestImageGenerationService:
         service.ai_client.generate_content.return_value = mock_response
 
         # Create input image
-        input_image = Mock(spec=types.Image)
+        input_image = Mock()  # Just a mock Image object
 
         result = await service.generate_single_style(
             image=input_image, gender=Gender.FEMALE, style_index=0
@@ -125,9 +124,10 @@ class TestImageGenerationService:
 
         # Verify AI client was called correctly
         service.ai_client.generate_content.assert_called_once()
-        call_args = service.ai_client.generate_content.call_args
-        assert call_args[1]["model"] == "gemini-2.5-flash-image-preview"
-        assert input_image in call_args[1]["contents"]
+        call_kwargs = service.ai_client.generate_content.call_args.kwargs
+        assert call_kwargs["model"] == "gemini-2.5-flash-image-preview"
+        assert isinstance(call_kwargs["prompt"], str)
+        assert call_kwargs["image"] == input_image
 
     @pytest.mark.asyncio
     async def test_generate_single_style_with_custom_text(
@@ -141,7 +141,7 @@ class TestImageGenerationService:
         service.ai_client.extract_image_from_response.return_value = sample_image_bytes
         service.ai_client.generate_content.return_value = mock_response
 
-        input_image = Mock(spec=types.Image)
+        input_image = Mock()  # Just a mock Image object
         custom_text = "Make it more dramatic"
 
         result = await service.generate_single_style(
@@ -154,8 +154,8 @@ class TestImageGenerationService:
         assert result.description == "Custom style description"
 
         # Check that custom text was included in prompt
-        call_args = service.ai_client.generate_content.call_args
-        prompt = call_args[1]["contents"][0]  # First content is the prompt
+        call_kwargs = service.ai_client.generate_content.call_args.kwargs
+        prompt = call_kwargs["prompt"]
         assert custom_text in prompt
 
     @pytest.mark.asyncio
@@ -168,7 +168,7 @@ class TestImageGenerationService:
         service.ai_client.extract_image_from_response.return_value = None  # No image
         service.ai_client.generate_content.return_value = mock_response
 
-        input_image = Mock(spec=types.Image)
+        input_image = Mock()  # Just a mock Image object
 
         with pytest.raises(ImageGenerationError) as exc_info:
             await service.generate_single_style(
@@ -198,7 +198,7 @@ class TestImageGenerationService:
             "https://storage.example.com/style3.jpg",
         ]
 
-        input_image = Mock(spec=types.Image)
+        input_image = Mock()  # Just a mock Image object
 
         results = await service.generate_three_styles(
             image=input_image, gender=Gender.NEUTRAL
@@ -234,7 +234,7 @@ class TestImageGenerationService:
         ]
         service.ai_client.generate_content.return_value = mock_response
 
-        input_image = Mock(spec=types.Image)
+        input_image = Mock()  # Just a mock Image object
 
         with pytest.raises(ImageGenerationError) as exc_info:
             await service.generate_three_styles(image=input_image, gender=Gender.FEMALE)
@@ -254,9 +254,10 @@ class TestImageGenerationService:
         service.ai_client.extract_image_from_response.return_value = sample_image_bytes
         service.ai_client.generate_content.return_value = mock_response
 
-        with patch("app.services.image_generation.types.Image") as mock_image_class:
-            mock_image_instance = Mock()
-            mock_image_class.return_value = mock_image_instance
+        with patch("app.services.image_generation.Image") as mock_pil_image_class:
+            # Mock PIL Image.open
+            mock_pil_image = Mock()
+            mock_pil_image_class.open.return_value = mock_pil_image
 
             results = await service.process_upload_and_generate(
                 base64_photo=base64_image, gender=Gender.MALE
@@ -267,10 +268,10 @@ class TestImageGenerationService:
                 assert isinstance(result, StyleGeneration)
                 assert result.description == "Generated style"
 
-            # Verify Image was created correctly
-            mock_image_class.assert_called_with(
-                image_bytes=sample_image_bytes, mime_type="image/jpeg"
-            )
+            # Verify PIL Image.open was called with BytesIO
+            mock_pil_image_class.open.assert_called()
+            call_arg = mock_pil_image_class.open.call_args[0][0]
+            assert isinstance(call_arg, BytesIO)
 
     @pytest.mark.asyncio
     async def test_process_upload_invalid_base64(
@@ -298,7 +299,7 @@ class TestImageGenerationService:
         # Storage upload fails
         service.storage_service.upload_image.side_effect = Exception("Storage error")
 
-        input_image = Mock(spec=types.Image)
+        input_image = Mock()  # Just a mock Image object
 
         with pytest.raises(ImageGenerationError) as exc_info:
             await service.generate_single_style(

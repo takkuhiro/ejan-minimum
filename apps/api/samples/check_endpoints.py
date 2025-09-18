@@ -7,6 +7,7 @@
 import base64
 import requests
 
+
 def check_api_styles_generate():
     # === 設定 ===
     IMAGE_PATH = "resources/IMG_1206.jpg"  # テストする画像ファイルのパス
@@ -22,6 +23,7 @@ def check_api_styles_generate():
 
     # 結果を表示
     print(response.json())
+
 
 if __name__ == "__main__":
     check_api_styles_generate()
