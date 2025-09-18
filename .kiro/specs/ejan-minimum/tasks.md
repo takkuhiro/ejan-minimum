@@ -442,8 +442,8 @@ terraform/
   - **ドキュメント作成**: `docs/agents/7.2-**.md`にAPI統合方法を記録
   - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
 
-- [ ] 8. テストの実装
-- [ ] 8.1 バックエンドユニットテストの作成
+- [x] 8. テストの実装
+- [x] 8.1 バックエンドユニットテストの作成
   - **作成場所**: `apps/api/tests/unit/`
   - **使用ツール**: `uv add --dev pytest pytest-asyncio pytest-mock`
   - **テスト内容**:

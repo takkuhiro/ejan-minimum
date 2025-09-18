@@ -22,7 +22,10 @@ class AIClientInitError(AIClientError):
 class AIClientAPIError(AIClientError):
     """Exception raised during API calls."""
 
-    pass
+    def __init__(self, message: str, status_code: Optional[int] = None):
+        """Initialize API error with message and optional status code."""
+        super().__init__(message)
+        self.status_code = status_code
 
 
 class AIClientTimeoutError(AIClientError):

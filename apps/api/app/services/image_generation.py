@@ -25,7 +25,11 @@ class Gender(str, Enum):
 class ImageGenerationError(Exception):
     """Exception raised during image generation."""
 
-    pass
+    def __init__(self, message: str, cause: Optional[Exception] = None):
+        """Initialize with message and optional underlying cause."""
+        super().__init__(message)
+        if cause:
+            self.__cause__ = cause
 
 
 @dataclass
