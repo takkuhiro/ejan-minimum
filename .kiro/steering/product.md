@@ -71,12 +71,15 @@
 - **Tutorial Structure Service**: Step-by-step tutorial generation
 - **Testing Framework**: Unit and integration test structure with full coverage
 - **Infrastructure Modules**: Terraform for storage and IAM
+- **API Endpoints**: Styles endpoint (/api/styles) and Tutorial endpoints (/api/tutorials) (Tasks 5.1-5.3)
+- **Frontend API Client**: HTTP client with error handling in lib/api/ (Task 6.1)
+- **Photo Upload UI**: Interactive photo upload component with drag-and-drop (Task 6.2)
+- **Style Selection UI**: Style grid with selection and customization features (Task 6.3)
 
 ### In Progress
-- **API Endpoints**: Finalizing style generation and tutorial endpoints
 - **Cloud Functions**: Deploying AI models as serverless functions
-- **Frontend-Backend Integration**: Connecting UI to API
 - **Cloud Run Deployment**: Container deployment setup
+- **Full Frontend-Backend Integration**: Completing API integration for all screens
 
 ## Business Model (Future)
 

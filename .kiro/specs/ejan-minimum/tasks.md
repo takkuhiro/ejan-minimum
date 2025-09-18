@@ -408,7 +408,7 @@ terraform/
   - **修正場所**: `apps/web/app/generating/page.tsx`, `apps/web/app/tutorial/page.tsx`
   - **実装内容**:
     - チュートリアル生成APIの呼び出し
-    - 生成中の進捗表示（約3分の待機時間表示）
+    - 生成中の進捗表示（待機画面表示）
     - 動画URLの受信と再生処理（HTML5 video要素）
     - ステップごとの画像・動画表示
     - 前後ステップナビゲーション機能

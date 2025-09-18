@@ -45,6 +45,21 @@
 }
 ```
 
+### Frontend API Client (Implemented)
+- **Location**: `apps/web/lib/api/`
+- **Features**:
+  - Type-safe API client with TypeScript interfaces
+  - Centralized error handling with error-handler.ts
+  - Automatic retry logic for failed requests
+  - Support for file uploads and JSON responses
+  - Environment-based API URL configuration
+- **Methods**:
+  - `generateStyles()`: Upload photo and generate styles
+  - `getStyles()`: Retrieve available styles
+  - `getStyleDetails()`: Get specific style information
+  - `generateTutorial()`: Create tutorial for selected style
+  - `getTutorialStatus()`: Poll tutorial generation status
+
 ## Backend
 
 ### Core Technologies
@@ -52,6 +67,14 @@
 - **Framework**: FastAPI
 - **ASGI Server**: Uvicorn
 - **Package Manager**: uv (not pip/venv)
+
+### API Endpoints (Implemented)
+- **POST /api/styles/generate**: Generate style recommendations from uploaded photo
+- **GET /api/styles**: Retrieve available styles
+- **GET /api/styles/{style_id}**: Get specific style details
+- **POST /api/tutorials/generate**: Generate tutorial for selected style
+- **GET /api/tutorials/{tutorial_id}**: Get tutorial details with steps
+- **GET /api/tutorials/{tutorial_id}/status**: Check generation status
 
 ### Backend Libraries
 ```python
