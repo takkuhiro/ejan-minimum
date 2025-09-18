@@ -306,3 +306,205 @@ async def test_generate_styles_with_all_genders(valid_image_base64):
                 assert response.status_code == status.HTTP_200_OK
                 data = response.json()
                 assert len(data["styles"]) == 3
+
+
+# ================ Tests for GET /api/styles/{id} endpoint ================
+
+
+@pytest.mark.asyncio
+async def test_get_style_success(valid_image_base64):
+    """Test successful retrieval of a style by ID."""
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        # First, generate styles to populate the store
+        request_data = {"photo": valid_image_base64, "gender": "female"}
+
+        with patch(
+            "app.api.routes.styles.StyleGenerationService"
+        ) as mock_service_class:
+            mock_service = AsyncMock()
+            mock_service_class.return_value = mock_service
+
+            from app.models.response import GeneratedStyle
+
+            test_style = GeneratedStyle(
+                id="test-style-123",
+                title="Test Style",
+                description="A test style description with tools: brush, sponge, eyeliner",
+                imageUrl="https://storage.googleapis.com/bucket/test-style.jpg",
+            )
+
+            mock_service.generate_styles.return_value = [test_style]
+
+            # Generate styles to populate the store
+            await client.post("/api/styles/generate", json=request_data)
+
+            # Now retrieve the specific style
+            response = await client.get("/api/styles/test-style-123")
+
+            assert response.status_code == status.HTTP_200_OK
+            data = response.json()
+            assert data["id"] == "test-style-123"
+            assert data["title"] == "Test Style"
+            assert (
+                data["description"]
+                == "A test style description with tools: brush, sponge, eyeliner"
+            )
+            assert (
+                data["imageUrl"]
+                == "https://storage.googleapis.com/bucket/test-style.jpg"
+            )
+
+
+@pytest.mark.asyncio
+async def test_get_style_not_found():
+    """Test retrieval of a non-existent style."""
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        # Try to get a style that doesn't exist
+        response = await client.get("/api/styles/non-existent-style-id")
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        error_data = response.json()
+        assert "detail" in error_data
+        assert "non-existent-style-id" in error_data["detail"]
+        assert "not found" in error_data["detail"].lower()
+
+
+@pytest.mark.asyncio
+async def test_get_style_after_generation(valid_image_base64):
+    """Test that generated styles can be retrieved individually."""
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        # Generate multiple styles
+        request_data = {"photo": valid_image_base64, "gender": "male"}
+
+        with patch(
+            "app.api.routes.styles.StyleGenerationService"
+        ) as mock_service_class:
+            mock_service = AsyncMock()
+            mock_service_class.return_value = mock_service
+
+            from app.models.response import GeneratedStyle
+
+            styles = [
+                GeneratedStyle(
+                    id=f"style-{i}",
+                    title=f"Style {i}",
+                    description=f"Description for style {i} with tools",
+                    imageUrl=f"https://storage.googleapis.com/bucket/style-{i}.jpg",
+                )
+                for i in range(1, 4)
+            ]
+
+            mock_service.generate_styles.return_value = styles
+
+            # Generate styles
+            generation_response = await client.post(
+                "/api/styles/generate", json=request_data
+            )
+            assert generation_response.status_code == status.HTTP_200_OK
+
+            # Retrieve each style individually
+            for i in range(1, 4):
+                response = await client.get(f"/api/styles/style-{i}")
+                assert response.status_code == status.HTTP_200_OK
+                data = response.json()
+                assert data["id"] == f"style-{i}"
+                assert data["title"] == f"Style {i}"
+                assert data["description"] == f"Description for style {i} with tools"
+
+
+@pytest.mark.asyncio
+async def test_get_style_with_special_characters_in_id(valid_image_base64):
+    """Test retrieval of style with special characters in ID."""
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        request_data = {"photo": valid_image_base64, "gender": "neutral"}
+
+        with patch(
+            "app.api.routes.styles.StyleGenerationService"
+        ) as mock_service_class:
+            mock_service = AsyncMock()
+            mock_service_class.return_value = mock_service
+
+            from app.models.response import GeneratedStyle
+
+            special_id = "style_2024-01-15_abc123"
+            test_style = GeneratedStyle(
+                id=special_id,
+                title="Special Style",
+                description="Style with special ID format",
+                imageUrl="https://storage.googleapis.com/bucket/special.jpg",
+            )
+
+            mock_service.generate_styles.return_value = [test_style]
+
+            # Generate style
+            await client.post("/api/styles/generate", json=request_data)
+
+            # Retrieve style with special characters in ID
+            response = await client.get(f"/api/styles/{special_id}")
+
+            assert response.status_code == status.HTTP_200_OK
+            data = response.json()
+            assert data["id"] == special_id
+
+
+@pytest.mark.asyncio
+async def test_get_style_memory_persistence(valid_image_base64):
+    """Test that styles persist in memory across multiple requests."""
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        request_data = {"photo": valid_image_base64, "gender": "female"}
+
+        with patch(
+            "app.api.routes.styles.StyleGenerationService"
+        ) as mock_service_class:
+            mock_service = AsyncMock()
+            mock_service_class.return_value = mock_service
+
+            from app.models.response import GeneratedStyle
+
+            persistent_style = GeneratedStyle(
+                id="persistent-style",
+                title="Persistent Style",
+                description="This style should persist in memory",
+                imageUrl="https://storage.googleapis.com/bucket/persistent.jpg",
+            )
+
+            mock_service.generate_styles.return_value = [persistent_style]
+
+            # Generate style once
+            await client.post("/api/styles/generate", json=request_data)
+
+        # Try to retrieve the same style multiple times without regenerating
+        for _ in range(3):
+            response = await client.get("/api/styles/persistent-style")
+            assert response.status_code == status.HTTP_200_OK
+            data = response.json()
+            assert data["id"] == "persistent-style"
+            assert data["title"] == "Persistent Style"
+
+
+@pytest.mark.asyncio
+async def test_get_style_cors_headers():
+    """Test that CORS headers are properly set for GET requests."""
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        # Try to get a non-existent style (to avoid needing to generate first)
+        response = await client.get(
+            "/api/styles/test-style",
+            headers={"Origin": "http://localhost:3000"},
+        )
+
+        # Check CORS headers even on 404 response
+        assert "access-control-allow-origin" in response.headers
+        allowed_origins = response.headers["access-control-allow-origin"]
+        assert allowed_origins == "http://localhost:3000"

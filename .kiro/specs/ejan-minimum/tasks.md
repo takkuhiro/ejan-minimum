@@ -339,7 +339,7 @@ terraform/
   - **Cloud Function URL**: 環境変数で管理
   - _Requirements: 2.2, 2.3, 2.4, 2.5, 3.1, 3.2, 3.3, 3.4, 3.5, 3.6_
 
-- [ ] 5.3 スタイル詳細取得エンドポイントの実装
+- [x] 5.3 スタイル詳細取得エンドポイントの実装
   - **作成場所**: `apps/api/app/api/routes/styles.py`
   - **実装内容**:
     - GET /api/styles/{id}の実装
