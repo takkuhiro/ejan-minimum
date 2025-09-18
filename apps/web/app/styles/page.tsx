@@ -1,57 +1,175 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Plus, Sparkles, Check } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Plus, Sparkles, Check, Clock, Wand2 } from "lucide-react";
 import Link from "next/link";
-
-// Mock data for generated styles
-const mockStyles = [
-  {
-    id: 1,
-    name: "ナチュラル美人",
-    description: "自然な美しさを引き出すソフトメイク",
-    imageUrl: "/natural-japanese-makeup-style.jpg",
-    tags: ["ナチュラル", "デイリー", "上品"],
-  },
-  {
-    id: 2,
-    name: "エレガント",
-    description: "洗練された大人の魅力を演出",
-    imageUrl: "/elegant-japanese-makeup-style.jpg",
-    tags: ["エレガント", "フォーマル", "大人っぽい"],
-  },
-  {
-    id: 3,
-    name: "トレンディ",
-    description: "最新トレンドを取り入れたモダンスタイル",
-    imageUrl: "/trendy-japanese-makeup-style.jpg",
-    tags: ["トレンド", "モダン", "個性的"],
-  },
-];
+import Image from "next/image";
+import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
+import { apiClient } from "@/lib/api/client";
+import type { Style, StyleDetailResponse } from "@/types/api";
 
 export default function StyleSelectionPage() {
-  const [selectedStyle, setSelectedStyle] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const handleStyleSelect = (styleId: number) => {
-    setSelectedStyle(styleId);
+  const [styles, setStyles] = useState<Style[]>([]);
+  const [userPhotoUrl, setUserPhotoUrl] = useState<string | null>(null);
+  const [selectedStyle, setSelectedStyle] = useState<Style | null>(null);
+  const [selectedStyleDetails, setSelectedStyleDetails] = useState<
+    StyleDetailResponse["style"] | null
+  >(null);
+  const [customizationText, setCustomizationText] = useState("");
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [imageLoadErrors, setImageLoadErrors] = useState<Set<string>>(
+    new Set(),
+  );
+
+  // Load styles and photo from URL params or localStorage on mount
+  useEffect(() => {
+    const loadStyleData = () => {
+      // Try URL params first
+      const stylesParam = searchParams.get("styles");
+      const photoParam = searchParams.get("photo");
+
+      if (stylesParam && photoParam) {
+        try {
+          const decodedStyles = JSON.parse(decodeURIComponent(stylesParam));
+          setStyles(decodedStyles);
+          setUserPhotoUrl(decodeURIComponent(photoParam));
+
+          // Save to localStorage as backup
+          localStorage.setItem(
+            "generatedStyles",
+            JSON.stringify(decodedStyles),
+          );
+          localStorage.setItem("userPhoto", decodeURIComponent(photoParam));
+        } catch (error) {
+          console.error("Error parsing URL params:", error);
+          loadFromLocalStorage();
+        }
+      } else {
+        // Fallback to localStorage
+        loadFromLocalStorage();
+      }
+    };
+
+    const loadFromLocalStorage = () => {
+      const savedStyles = localStorage.getItem("generatedStyles");
+      const savedPhoto = localStorage.getItem("userPhoto");
+
+      if (savedStyles) {
+        try {
+          setStyles(JSON.parse(savedStyles));
+        } catch (error) {
+          console.error("Error parsing localStorage styles:", error);
+        }
+      }
+
+      if (savedPhoto) {
+        setUserPhotoUrl(savedPhoto);
+      }
+    };
+
+    loadStyleData();
+  }, [searchParams]);
+
+  const handleStyleSelect = async (style: Style) => {
+    setSelectedStyle(style);
+
+    // Save selection to localStorage for recovery
+    localStorage.setItem("selectedStyle", JSON.stringify(style));
+
+    // Fetch style details
+    setIsLoadingDetails(true);
+    try {
+      const response = await apiClient.getStyleDetail(style.id);
+      if (response.success) {
+        setSelectedStyleDetails(response.data.style);
+      } else {
+        toast.error("スタイルの詳細を取得できませんでした");
+      }
+    } catch (error) {
+      console.error("Error fetching style details:", error);
+      toast.error("スタイルの詳細を取得できませんでした");
+    } finally {
+      setIsLoadingDetails(false);
+    }
   };
 
   const handleCustomize = () => {
-    // Navigate to customization page
-    window.location.href = "/customize";
+    // Navigate to customization page with styles and photo
+    const params = new URLSearchParams();
+    if (styles.length > 0) {
+      params.set("styles", encodeURIComponent(JSON.stringify(styles)));
+    }
+    if (userPhotoUrl) {
+      params.set("photo", encodeURIComponent(userPhotoUrl));
+    }
+
+    router.push({
+      pathname: "/customize",
+      query: Object.fromEntries(params),
+    } as { pathname: string; query: Record<string, string> });
   };
 
-  const handleConfirmSelection = () => {
+  const handleConfirmSelection = async () => {
     if (!selectedStyle) return;
 
-    setIsLoading(true);
-    // Navigate to customization page with selected style
-    setTimeout(() => {
-      window.location.href = `/customize?style=${selectedStyle}`;
-    }, 1000);
+    setIsGenerating(true);
+    const loadingToast = toast.loading("チュートリアルを生成中...");
+
+    try {
+      const request = {
+        styleId: selectedStyle.id,
+        ...(customizationText && { customizations: customizationText }),
+      };
+
+      const response = await apiClient.generateTutorial(request);
+
+      if (response.success) {
+        // Save tutorial data to localStorage
+        localStorage.setItem(
+          "currentTutorial",
+          JSON.stringify(response.data.tutorial),
+        );
+        localStorage.setItem("selectedStyleId", selectedStyle.id);
+
+        toast.dismiss(loadingToast);
+        toast.success("チュートリアルの生成を開始しました");
+
+        // Navigate to generating page
+        router.push("/generating");
+      } else {
+        throw new Error(response.error.message);
+      }
+    } catch (error) {
+      console.error("Error generating tutorial:", error);
+      toast.dismiss(loadingToast);
+      toast.error(
+        "チュートリアルの生成に失敗しました。もう一度お試しください。",
+      );
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleImageError = (styleId: string) => {
+    setImageLoadErrors((prev) => new Set(prev).add(styleId));
+  };
+
+  const getImageSrc = (style: Style) => {
+    if (imageLoadErrors.has(style.id)) {
+      return "/placeholder.svg";
+    }
+    return style.imageUrl || "/placeholder.svg";
   };
 
   return (
@@ -80,84 +198,182 @@ export default function StyleSelectionPage() {
         </div>
 
         {/* Original Photo */}
-        <div className="mb-8">
-          <Card className="max-w-sm mx-auto">
-            <CardHeader>
-              <CardTitle className="text-center text-lg">
-                あなたの写真
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <img
-                src="/japanese-person-portrait.png"
-                alt="Original photo"
-                className="w-full h-48 object-cover rounded-lg"
-              />
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Style Options */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {mockStyles.map((style) => (
-            <Card
-              key={style.id}
-              className={`cursor-pointer transition-all duration-200 hover:shadow-lg ${
-                selectedStyle === style.id
-                  ? "ring-2 ring-primary shadow-lg"
-                  : ""
-              }`}
-              onClick={() => handleStyleSelect(style.id)}
-            >
-              <CardHeader className="pb-3">
-                <div className="relative">
-                  <img
-                    src={style.imageUrl || "/placeholder.svg"}
-                    alt={style.name}
-                    className="w-full h-48 object-cover rounded-lg"
-                  />
-                  {selectedStyle === style.id && (
-                    <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1">
-                      <Check className="w-4 h-4" />
-                    </div>
-                  )}
-                </div>
+        {userPhotoUrl && (
+          <div className="mb-8">
+            <Card className="max-w-sm mx-auto">
+              <CardHeader>
+                <CardTitle className="text-center text-lg">
+                  あなたの写真
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <CardTitle className="text-lg mb-2">{style.name}</CardTitle>
-                <p className="text-sm text-muted-foreground mb-3">
-                  {style.description}
+                <div className="relative w-full h-48 overflow-hidden rounded-lg">
+                  <Image
+                    src={userPhotoUrl}
+                    alt="あなたの写真"
+                    fill
+                    className="object-cover"
+                    priority
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Style Options */}
+        {styles.length > 0 ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {styles.map((style) => (
+              <Card
+                key={style.id}
+                className={`cursor-pointer transition-all duration-200 hover:shadow-lg ${
+                  selectedStyle?.id === style.id
+                    ? "ring-2 ring-primary shadow-lg"
+                    : ""
+                }`}
+                onClick={() => handleStyleSelect(style)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    handleStyleSelect(style);
+                  }
+                }}
+              >
+                <CardHeader className="pb-3">
+                  <div className="relative">
+                    <div className="relative w-full h-48 overflow-hidden rounded-lg">
+                      <Image
+                        src={getImageSrc(style)}
+                        alt={style.title}
+                        fill
+                        className="object-cover"
+                        onError={() => handleImageError(style.id)}
+                      />
+                    </div>
+                    {selectedStyle?.id === style.id && (
+                      <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1">
+                        <Check className="w-4 h-4 lucide-check" />
+                      </div>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <CardTitle className="text-lg mb-2">{style.title}</CardTitle>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    {style.description}
+                  </p>
+
+                  {/* Display style details if selected and loaded */}
+                  {selectedStyle?.id === style.id && selectedStyleDetails && (
+                    <div className="mt-4 space-y-2">
+                      {selectedStyleDetails.tools &&
+                        selectedStyleDetails.tools.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {selectedStyleDetails.tools
+                              .slice(0, 3)
+                              .map((tool, index) => (
+                                <Badge
+                                  key={index}
+                                  variant="secondary"
+                                  className="text-xs"
+                                >
+                                  {tool}
+                                </Badge>
+                              ))}
+                            {selectedStyleDetails.tools.length > 3 && (
+                              <Badge variant="secondary" className="text-xs">
+                                +{selectedStyleDetails.tools.length - 3}
+                              </Badge>
+                            )}
+                          </div>
+                        )}
+                      {selectedStyleDetails.estimatedTime && (
+                        <div className="flex items-center text-xs text-muted-foreground">
+                          <Clock className="w-3 h-3 mr-1" />
+                          <span>{selectedStyleDetails.estimatedTime}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Loading skeleton for details */}
+                  {selectedStyle?.id === style.id && isLoadingDetails && (
+                    <div className="mt-4 space-y-2">
+                      <Skeleton className="h-6 w-full" />
+                      <Skeleton className="h-4 w-2/3" />
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+
+            {/* Custom Option */}
+            <Card
+              className="cursor-pointer transition-all duration-200 hover:shadow-lg border-dashed border-2 border-muted-foreground/30 hover:border-primary/50"
+              onClick={handleCustomize}
+            >
+              <CardContent className="flex flex-col items-center justify-center h-full min-h-[300px] text-center">
+                <div className="bg-muted rounded-full p-6 mb-4">
+                  <Plus className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <CardTitle className="text-lg mb-2">カスタマイズ</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  自分だけのオリジナルスタイルを作成
                 </p>
               </CardContent>
             </Card>
-          ))}
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {[1, 2, 3].map((i) => (
+              <Card key={i}>
+                <CardHeader className="pb-3">
+                  <Skeleton className="w-full h-48 rounded-lg" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-6 w-3/4 mb-2" />
+                  <Skeleton className="h-4 w-full" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
-          {/* Custom Option */}
-          <Card
-            className="cursor-pointer transition-all duration-200 hover:shadow-lg border-dashed border-2 border-muted-foreground/30 hover:border-primary/50"
-            onClick={handleCustomize}
-          >
-            <CardContent className="flex flex-col items-center justify-center h-full min-h-[300px] text-center">
-              <div className="bg-muted rounded-full p-6 mb-4">
-                <Plus className="w-8 h-8 text-muted-foreground" />
+        {/* Customization Input */}
+        {selectedStyle && (
+          <Card className="max-w-2xl mx-auto mb-8">
+            <CardContent className="pt-6">
+              <Label htmlFor="customization">
+                カスタマイズ要望（オプション）
+              </Label>
+              <div className="flex gap-2 mt-2">
+                <Input
+                  id="customization"
+                  type="text"
+                  placeholder="例：もっとナチュラルに、赤みを抑えて..."
+                  value={customizationText}
+                  onChange={(e) => setCustomizationText(e.target.value)}
+                  className="flex-1"
+                />
+                <Button variant="outline" size="icon">
+                  <Wand2 className="h-4 w-4" />
+                </Button>
               </div>
-              <CardTitle className="text-lg mb-2">カスタマイズ</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                自分だけのオリジナルスタイルを作成
-              </p>
             </CardContent>
           </Card>
-        </div>
+        )}
 
         {/* Action Buttons */}
         <div className="flex justify-center space-x-4">
           <Button
             onClick={handleConfirmSelection}
-            disabled={!selectedStyle || isLoading}
+            disabled={!selectedStyle || isGenerating}
             size="lg"
             className="px-8"
           >
-            {isLoading ? (
+            {isGenerating ? (
               <>
                 <Sparkles className="w-5 h-5 mr-2 animate-spin" />
                 処理中...
