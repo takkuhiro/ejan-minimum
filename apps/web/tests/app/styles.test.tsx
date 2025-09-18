@@ -233,7 +233,8 @@ describe("StyleSelectionPage - API Integration", () => {
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(
-          expect.stringContaining("スタイルの詳細を取得できませんでした"),
+          expect.stringContaining("ネットワーク接続を確認してください"),
+          expect.any(Object),
         );
       });
     });
@@ -399,7 +400,8 @@ describe("StyleSelectionPage - API Integration", () => {
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(
-          expect.stringContaining("チュートリアルの生成に失敗しました"),
+          expect.stringContaining("サーバーエラーが発生しました"),
+          expect.any(Object),
         );
       });
 

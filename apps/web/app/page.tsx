@@ -130,10 +130,8 @@ export default function WelcomePage() {
         });
 
         setIsGenerating(false);
-        // Don't reset photo on retryable errors
-        if (isValidationError(error)) {
-          setUploadedPhoto(null);
-        }
+        // Reset photo on all errors to disable the button
+        setUploadedPhoto(null);
       }
     } catch (error) {
       console.error("Failed to generate styles:", error);
@@ -167,6 +165,8 @@ export default function WelcomePage() {
       }
 
       setIsGenerating(false);
+      // Reset photo on all errors to disable the button
+      setUploadedPhoto(null);
     }
   };
 

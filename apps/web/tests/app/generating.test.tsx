@@ -63,7 +63,9 @@ describe("GeneratingPage - Tutorial Generation", () => {
       );
 
       // Act
-      render(<GeneratingPage />);
+      await act(async () => {
+        render(<GeneratingPage />);
+      });
 
       // Assert
       await waitFor(() => {
@@ -94,7 +96,9 @@ describe("GeneratingPage - Tutorial Generation", () => {
       );
 
       // Act
-      render(<GeneratingPage />);
+      await act(async () => {
+        render(<GeneratingPage />);
+      });
 
       // Assert
       await waitFor(() => {
@@ -131,7 +135,9 @@ describe("GeneratingPage - Tutorial Generation", () => {
 
       // Act
       jest.useFakeTimers();
-      render(<GeneratingPage />);
+      await act(async () => {
+        render(<GeneratingPage />);
+      });
 
       // Wait for initial API call
       await waitFor(() => {
@@ -175,7 +181,9 @@ describe("GeneratingPage - Tutorial Generation", () => {
       jest.useFakeTimers();
 
       // Act
-      render(<GeneratingPage />);
+      await act(async () => {
+        render(<GeneratingPage />);
+      });
 
       // Wait for the API call to complete
       await waitFor(() => {
@@ -199,7 +207,9 @@ describe("GeneratingPage - Tutorial Generation", () => {
       mockSearchParams.set("styleId", "style-123");
 
       // Act
-      render(<GeneratingPage />);
+      await act(async () => {
+        render(<GeneratingPage />);
+      });
 
       // Assert
       expect(screen.getByText("メイク手順を分析中")).toBeInTheDocument();
@@ -246,7 +256,9 @@ describe("GeneratingPage - Tutorial Generation", () => {
       );
 
       // Act
-      render(<GeneratingPage />);
+      await act(async () => {
+        render(<GeneratingPage />);
+      });
 
       // Assert
       await waitFor(() => {
@@ -272,11 +284,15 @@ describe("GeneratingPage - Tutorial Generation", () => {
       });
 
       // Act
-      const { container } = render(<GeneratingPage />);
+      let container: HTMLElement;
+      await act(async () => {
+        const result = render(<GeneratingPage />);
+        container = result.container;
+      });
 
       // Assert - Progress bar should be present
       await waitFor(() => {
-        const progressBar = container.querySelector('[role="progressbar"]');
+        const progressBar = container!.querySelector('[role="progressbar"]');
         expect(progressBar).toBeInTheDocument();
       });
     });
@@ -295,7 +311,9 @@ describe("GeneratingPage - Tutorial Generation", () => {
       });
 
       // Act
-      render(<GeneratingPage />);
+      await act(async () => {
+        render(<GeneratingPage />);
+      });
 
       // Assert - Look for "約3分かかります" text
       await waitFor(() => {
@@ -308,10 +326,14 @@ describe("GeneratingPage - Tutorial Generation", () => {
       mockSearchParams.set("styleId", "style-123");
 
       // Act
-      const { container } = render(<GeneratingPage />);
+      let container: HTMLElement;
+      await act(async () => {
+        const result = render(<GeneratingPage />);
+        container = result.container;
+      });
 
       // Assert
-      const animatedElements = container.querySelectorAll(".animate-pulse");
+      const animatedElements = container!.querySelectorAll(".animate-pulse");
       expect(animatedElements.length).toBeGreaterThan(0);
     });
   });
