@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,8 +14,12 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Upload, Sparkles, Users, Palette } from "lucide-react";
 import { PhotoUpload } from "@/components/photo-upload";
+import { apiClient } from "@/lib/api/client";
+import { toast } from "sonner";
+import type { Gender } from "@/types/api";
 
 export default function WelcomePage() {
+  const router = useRouter();
   const [selectedGender, setSelectedGender] = useState<string>("");
   const [uploadedPhoto, setUploadedPhoto] = useState<File | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -23,16 +28,67 @@ export default function WelcomePage() {
     setUploadedPhoto(file);
   };
 
+  const handlePhotoRemove = () => {
+    setUploadedPhoto(null);
+  };
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const result = reader.result as string;
+        // Remove data URL prefix (e.g., "data:image/jpeg;base64,")
+        const base64String = result.split(",")[1];
+        resolve(base64String);
+      };
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
   const handleStartGeneration = async () => {
     if (!selectedGender || !uploadedPhoto) return;
 
     setIsGenerating(true);
-    // TODO: Implement API call to generate makeup styles
-    // For now, simulate loading
-    setTimeout(() => {
-      // Navigate to style selection page
-      window.location.href = "/styles";
-    }, 3000);
+
+    try {
+      // Convert file to base64
+      const base64Photo = await fileToBase64(uploadedPhoto);
+
+      // Show loading toast
+      const loadingToast = toast.loading("スタイルを生成中...");
+
+      // Call API to generate styles
+      const response = await apiClient.generateStyles(
+        {
+          photo: base64Photo,
+          gender: selectedGender as Gender,
+        },
+        {
+          maxRetries: 3,
+        },
+      );
+
+      toast.dismiss(loadingToast);
+
+      if (response.success) {
+        // Navigate to styles page with generated data
+        const encodedData = encodeURIComponent(JSON.stringify(response.data));
+        router.push(`/styles?data=${encodedData}`);
+      } else {
+        // Handle error
+        toast.error(response.error.message || "スタイル生成に失敗しました");
+        setIsGenerating(false);
+        // Reset upload state on error to allow re-upload
+        setUploadedPhoto(null);
+      }
+    } catch (error) {
+      console.error("Failed to generate styles:", error);
+      toast.error("エラーが発生しました。もう一度お試しください。");
+      setIsGenerating(false);
+      // Reset upload state on error to allow re-upload
+      setUploadedPhoto(null);
+    }
   };
 
   return (
@@ -131,7 +187,10 @@ export default function WelcomePage() {
               <Label className="text-lg font-semibold">
                 顔写真をアップロード
               </Label>
-              <PhotoUpload onPhotoUpload={handlePhotoUpload} />
+              <PhotoUpload
+                onPhotoUpload={handlePhotoUpload}
+                onPhotoRemove={handlePhotoRemove}
+              />
               <p className="text-sm text-muted-foreground">
                 ※ 10MBまでのJPEG、PNG形式の画像をアップロードできます
               </p>

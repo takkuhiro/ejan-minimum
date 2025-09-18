@@ -5,6 +5,7 @@ import { GeistMono } from "geist/font/mono";
 import { Playfair_Display } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { Suspense } from "react";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const playfairDisplay = Playfair_Display({
@@ -31,6 +32,7 @@ export default function RootLayout({
         className={`font-sans ${GeistSans.variable} ${GeistMono.variable} ${playfairDisplay.variable}`}
       >
         <Suspense fallback={null}>{children}</Suspense>
+        <Toaster position="top-center" />
         <Analytics />
       </body>
     </html>

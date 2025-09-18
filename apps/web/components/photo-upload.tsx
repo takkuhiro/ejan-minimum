@@ -9,9 +9,13 @@ import { Upload, X, ImageIcon } from "lucide-react";
 
 interface PhotoUploadProps {
   onPhotoUpload: (file: File) => void;
+  onPhotoRemove?: () => void;
 }
 
-export function PhotoUpload({ onPhotoUpload }: PhotoUploadProps) {
+export function PhotoUpload({
+  onPhotoUpload,
+  onPhotoRemove,
+}: PhotoUploadProps) {
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -71,6 +75,10 @@ export function PhotoUpload({ onPhotoUpload }: PhotoUploadProps) {
     setPreviewUrl(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
+    }
+    // Notify parent component that photo was removed
+    if (onPhotoRemove) {
+      onPhotoRemove();
     }
   };
 

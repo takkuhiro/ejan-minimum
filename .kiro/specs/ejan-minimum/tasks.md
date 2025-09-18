@@ -381,7 +381,7 @@ terraform/
   - **ドキュメント作成**: `docs/agents/6.1-api-client.md`にAPI統合方法を記録
   - _Requirements: 基盤となる通信設定_
 
-- [ ] 6.2 写真アップロード画面とAPI連携
+- [x] 6.2 写真アップロード画面とAPI連携
   - **修正場所**: `apps/web/app/page.tsx`, `components/photo-upload.tsx`
   - **実装内容**:
     - モックデータをAPI呼び出しに置き換え
@@ -390,6 +390,7 @@ terraform/
     - エラー時のトースト通知実装（sonner使用）
     - レスポンス受信後の画面遷移処理（`useRouter`）
   - **既存コンポーネント**: shadcn/uiのProgress、Toast
+  - **ドキュメント作成**: `docs/agents/6.2-**.md`にAPI統合方法を記録
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.6, 6.1, 6.2, 6.5_
 
 - [ ] 6.3 スタイル選択画面のAPI統合
@@ -400,6 +401,7 @@ terraform/
     - スタイル選択時のAPI呼び出し
     - カスタマイズテキストの送信処理
   - **State管理**: React useState、useSearchParams
+  - **ドキュメント作成**: `docs/agents/6.3-**.md`にAPI統合方法を記録
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
 
 - [ ] 6.4 チュートリアル生成・表示画面の統合
@@ -411,6 +413,7 @@ terraform/
     - ステップごとの画像・動画表示
     - 前後ステップナビゲーション機能
   - **既存コンポーネント**: Tabs、AspectRatio、Card
+  - **ドキュメント作成**: `docs/agents/6.4-**.md`にAPI統合方法を記録
   - _Requirements: 3.3, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 6.3_
 
 - [ ] 7. エラーハンドリングとユーザビリティの実装
@@ -424,6 +427,7 @@ terraform/
     - エラーメッセージのローカライズ（日本語対応）
   - **使用コンポーネント**: Toast (sonner)、AlertDialog、Progress
   - **エラー種別**: ネットワーク、タイムアウト、バリデーション、サーバーエラー
+  - **ドキュメント作成**: `docs/agents/7.1-**.md`にAPI統合方法を記録
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
 
 - [ ] 7.2 UI/UX最適化とデスクトップ表示
@@ -435,6 +439,7 @@ terraform/
     - 最小幅制限とスクロールバー処理（min-width: 1024px）
     - ローディング状態の視覚的フィードバック（Skeleton、Spinner）
   - **Tailwind classes**: `container mx-auto`, `max-w-7xl`, `hover:scale-105`
+  - **ドキュメント作成**: `docs/agents/7.2-**.md`にAPI統合方法を記録
   - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
 
 - [ ] 8. テストの実装
@@ -469,6 +474,7 @@ terraform/
     - Cloud Function呼び出しのモックテスト
   - **モック**: AI APIとCloud Functionをモック化
   - **実行コマンド**: `cd apps/api && uv run pytest tests/integration/`
+  - **ドキュメント作成**: `docs/agents/8.2-**.md`にAPI統合方法を記録
   - _Requirements: 品質保証のため_
 
 - [ ] 8.3 フロントエンドE2Eテストの作成
@@ -481,6 +487,7 @@ terraform/
     - ローディング状態の動作確認
   - **実行コマンド**: `cd apps/web && npm run test:e2e`
   - **CI考慮**: GitHub Actionsでの自動実行も想定
+  - **ドキュメント作成**: `docs/agents/8.3-**.md`にAPI統合方法を記録
   - _Requirements: 全要件の動作確認_
 
 - [ ] 9. 最終統合と動作確認
@@ -496,6 +503,7 @@ terraform/
     - チュートリアル生成（約3-4分）
     - 動画再生の動作確認
   - **ツール**: Chrome DevTools（Network、Performance、Memory）
+  - **ドキュメント作成**: `docs/agents/9.1-**.md`にAPI統合方法を記録
   - _Requirements: 全要件_
 
 - [ ] 9.2 デモ環境での最終調整
@@ -521,8 +529,8 @@ terraform/
     FUNCTION_URL=<Terraformのoutputから取得>
     ```
   - **デプロイ**:
-    - Backend: Terraformで管理（Cloud Run）
-    - Frontend: `vercel deploy`
+    - Backend: Terraformで管理（Cloud Run: ejan-api）
+    - Frontend: Terraformで管理（Cloud Run: ejan-web）
   - **完了時チェック**:
     ```bash
     # 全体的な品質チェック - すべてが完全にパスすること
