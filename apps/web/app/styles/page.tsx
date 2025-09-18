@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, Plus, Sparkles, Check } from "lucide-react"
-import Link from "next/link"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeft, Plus, Sparkles, Check } from "lucide-react";
+import Link from "next/link";
 
 // Mock data for generated styles
 const mockStyles = [
@@ -29,30 +29,30 @@ const mockStyles = [
     imageUrl: "/trendy-japanese-makeup-style.jpg",
     tags: ["トレンド", "モダン", "個性的"],
   },
-]
+];
 
 export default function StyleSelectionPage() {
-  const [selectedStyle, setSelectedStyle] = useState<number | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [selectedStyle, setSelectedStyle] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleStyleSelect = (styleId: number) => {
-    setSelectedStyle(styleId)
-  }
+    setSelectedStyle(styleId);
+  };
 
   const handleCustomize = () => {
     // Navigate to customization page
-    window.location.href = "/customize"
-  }
+    window.location.href = "/customize";
+  };
 
   const handleConfirmSelection = () => {
-    if (!selectedStyle) return
+    if (!selectedStyle) return;
 
-    setIsLoading(true)
+    setIsLoading(true);
     // Navigate to customization page with selected style
     setTimeout(() => {
-      window.location.href = `/customize?style=${selectedStyle}`
-    }, 1000)
-  }
+      window.location.href = `/customize?style=${selectedStyle}`;
+    }, 1000);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-card to-background">
@@ -66,10 +66,15 @@ export default function StyleSelectionPage() {
             </Button>
           </Link>
           <div className="text-center flex-1">
-            <h1 className="text-3xl font-bold text-primary" style={{ fontFamily: "var(--font-playfair)" }}>
+            <h1
+              className="text-3xl font-bold text-primary"
+              style={{ fontFamily: "var(--font-playfair)" }}
+            >
               スタイルを選択
             </h1>
-            <p className="text-muted-foreground mt-2">お気に入りのメイクアップスタイルを選んでください</p>
+            <p className="text-muted-foreground mt-2">
+              お気に入りのメイクアップスタイルを選んでください
+            </p>
           </div>
           <div className="w-20" /> {/* Spacer for centering */}
         </div>
@@ -78,7 +83,9 @@ export default function StyleSelectionPage() {
         <div className="mb-8">
           <Card className="max-w-sm mx-auto">
             <CardHeader>
-              <CardTitle className="text-center text-lg">あなたの写真</CardTitle>
+              <CardTitle className="text-center text-lg">
+                あなたの写真
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <img
@@ -96,7 +103,9 @@ export default function StyleSelectionPage() {
             <Card
               key={style.id}
               className={`cursor-pointer transition-all duration-200 hover:shadow-lg ${
-                selectedStyle === style.id ? "ring-2 ring-primary shadow-lg" : ""
+                selectedStyle === style.id
+                  ? "ring-2 ring-primary shadow-lg"
+                  : ""
               }`}
               onClick={() => handleStyleSelect(style.id)}
             >
@@ -116,7 +125,9 @@ export default function StyleSelectionPage() {
               </CardHeader>
               <CardContent>
                 <CardTitle className="text-lg mb-2">{style.name}</CardTitle>
-                <p className="text-sm text-muted-foreground mb-3">{style.description}</p>
+                <p className="text-sm text-muted-foreground mb-3">
+                  {style.description}
+                </p>
               </CardContent>
             </Card>
           ))}
@@ -131,14 +142,21 @@ export default function StyleSelectionPage() {
                 <Plus className="w-8 h-8 text-muted-foreground" />
               </div>
               <CardTitle className="text-lg mb-2">カスタマイズ</CardTitle>
-              <p className="text-sm text-muted-foreground">自分だけのオリジナルスタイルを作成</p>
+              <p className="text-sm text-muted-foreground">
+                自分だけのオリジナルスタイルを作成
+              </p>
             </CardContent>
           </Card>
         </div>
 
         {/* Action Buttons */}
         <div className="flex justify-center space-x-4">
-          <Button onClick={handleConfirmSelection} disabled={!selectedStyle || isLoading} size="lg" className="px-8">
+          <Button
+            onClick={handleConfirmSelection}
+            disabled={!selectedStyle || isLoading}
+            size="lg"
+            className="px-8"
+          >
             {isLoading ? (
               <>
                 <Sparkles className="w-5 h-5 mr-2 animate-spin" />
@@ -152,9 +170,11 @@ export default function StyleSelectionPage() {
 
         {/* Help Text */}
         <div className="text-center mt-8">
-          <p className="text-sm text-muted-foreground">スタイルを選択後、さらに細かい調整が可能です</p>
+          <p className="text-sm text-muted-foreground">
+            スタイルを選択後、さらに細かい調整が可能です
+          </p>
         </div>
       </div>
     </div>
-  )
+  );
 }

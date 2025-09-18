@@ -1,19 +1,20 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Sparkles, Wand2, RefreshCw } from "lucide-react"
-import Link from "next/link"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Sparkles, Wand2, RefreshCw } from "lucide-react";
+import Link from "next/link";
 
 // Mock style data
 const mockStyleData = {
   1: {
     name: "ナチュラル美人",
     imageUrl: "/natural-japanese-makeup-result.jpg",
-    description: "自然な美しさを引き出すソフトメイクで、日常使いにぴったりのスタイルです。",
+    description:
+      "自然な美しさを引き出すソフトメイクで、日常使いにぴったりのスタイルです。",
     steps: [
       "ベースメイクで肌を整える",
       "アイブロウで眉毛を自然に整える",
@@ -22,61 +23,68 @@ const mockStyleData = {
       "チークで血色感をプラス",
       "リップで仕上げ",
     ],
-    tools: ["ファンデーション", "アイブロウペンシル", "アイシャドウパレット", "マスカラ", "チーク", "リップ"],
+    tools: [
+      "ファンデーション",
+      "アイブロウペンシル",
+      "アイシャドウパレット",
+      "マスカラ",
+      "チーク",
+      "リップ",
+    ],
   },
-}
+};
 
 export default function CustomizePage() {
-  const [selectedStyleId, setSelectedStyleId] = useState<string | null>(null)
-  const [customRequest, setCustomRequest] = useState("")
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [currentStyle, setCurrentStyle] = useState(mockStyleData[1])
-  const [isFromScratch, setIsFromScratch] = useState(false)
+  const [_selectedStyleId, setSelectedStyleId] = useState<string | null>(null);
+  const [customRequest, setCustomRequest] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [currentStyle, setCurrentStyle] = useState(mockStyleData[1]);
+  const [isFromScratch, setIsFromScratch] = useState(false);
 
   useEffect(() => {
     // Get style ID from URL params
-    const urlParams = new URLSearchParams(window.location.search)
-    const styleId = urlParams.get("style")
+    const urlParams = new URLSearchParams(window.location.search);
+    const styleId = urlParams.get("style");
 
     if (styleId && mockStyleData[styleId as keyof typeof mockStyleData]) {
-      setSelectedStyleId(styleId)
-      setCurrentStyle(mockStyleData[styleId as keyof typeof mockStyleData])
+      setSelectedStyleId(styleId);
+      setCurrentStyle(mockStyleData[styleId as keyof typeof mockStyleData]);
     } else {
-      setIsFromScratch(true)
+      setIsFromScratch(true);
     }
-  }, [])
+  }, []);
 
   const handleGenerate = async () => {
-    if (!customRequest.trim()) return
+    if (!customRequest.trim()) return;
 
-    setIsGenerating(true)
+    setIsGenerating(true);
 
     // Simulate API call
     setTimeout(() => {
-      setIsGenerating(false)
+      setIsGenerating(false);
       // Update the style with new generated content
       setCurrentStyle({
         ...currentStyle,
         description: `${currentStyle.description} カスタマイズされたスタイルです。`,
-      })
-    }, 3000)
-  }
+      });
+    }, 3000);
+  };
 
   const handleConfirm = () => {
     // Navigate to loading page
-    window.location.href = "/generating"
-  }
+    window.location.href = "/generating";
+  };
 
   const handleStartFromScratch = () => {
-    setIsFromScratch(true)
+    setIsFromScratch(true);
     setCurrentStyle({
       name: "カスタムスタイル",
       imageUrl: "/custom-makeup-placeholder.jpg",
       description: "あなただけのオリジナルメイクアップスタイルを作成します。",
       steps: [],
       tools: [],
-    })
-  }
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-card to-background">
@@ -90,10 +98,15 @@ export default function CustomizePage() {
             </Button>
           </Link>
           <div className="text-center flex-1">
-            <h1 className="text-3xl font-bold text-primary" style={{ fontFamily: "var(--font-playfair)" }}>
+            <h1
+              className="text-3xl font-bold text-primary"
+              style={{ fontFamily: "var(--font-playfair)" }}
+            >
               スタイル調整
             </h1>
-            <p className="text-muted-foreground mt-2">お好みに合わせて細かく調整できます</p>
+            <p className="text-muted-foreground mt-2">
+              お好みに合わせて細かく調整できます
+            </p>
           </div>
           <div className="w-20" />
         </div>
@@ -106,7 +119,11 @@ export default function CustomizePage() {
                 <CardTitle className="flex items-center justify-between">
                   {currentStyle.name}
                   {!isFromScratch && (
-                    <Button variant="outline" size="sm" onClick={handleStartFromScratch}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleStartFromScratch}
+                    >
                       <RefreshCw className="w-4 h-4 mr-2" />
                       0から設定する
                     </Button>
@@ -119,7 +136,9 @@ export default function CustomizePage() {
                   alt={currentStyle.name}
                   className="w-full h-64 object-cover rounded-lg mb-4"
                 />
-                <p className="text-muted-foreground mb-4">{currentStyle.description}</p>
+                <p className="text-muted-foreground mb-4">
+                  {currentStyle.description}
+                </p>
 
                 {currentStyle.steps.length > 0 && (
                   <div className="mb-4">
@@ -160,7 +179,9 @@ export default function CustomizePage() {
               <CardContent className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    {isFromScratch ? "どのようなメイクをしたいですか？" : "どのように調整したいですか？"}
+                    {isFromScratch
+                      ? "どのようなメイクをしたいですか？"
+                      : "どのように調整したいですか？"}
                   </label>
                   <Textarea
                     placeholder={
@@ -174,7 +195,11 @@ export default function CustomizePage() {
                   />
                 </div>
 
-                <Button onClick={handleGenerate} disabled={!customRequest.trim() || isGenerating} className="w-full">
+                <Button
+                  onClick={handleGenerate}
+                  disabled={!customRequest.trim() || isGenerating}
+                  className="w-full"
+                >
                   {isGenerating ? (
                     <>
                       <Sparkles className="w-4 h-4 mr-2 animate-spin" />
@@ -196,12 +221,14 @@ export default function CustomizePage() {
                 <Button onClick={handleConfirm} size="lg" className="w-full">
                   これで決まり
                 </Button>
-                <p className="text-sm text-muted-foreground text-center mt-2">詳細な手順書を作成します（約3分）</p>
+                <p className="text-sm text-muted-foreground text-center mt-2">
+                  詳細な手順書を作成します（約3分）
+                </p>
               </CardContent>
             </Card>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -1,33 +1,39 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Label } from "@/components/ui/label"
-import { Upload, Sparkles, Users, Palette } from "lucide-react"
-import { PhotoUpload } from "@/components/photo-upload"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Upload, Sparkles, Users, Palette } from "lucide-react";
+import { PhotoUpload } from "@/components/photo-upload";
 
 export default function WelcomePage() {
-  const [selectedGender, setSelectedGender] = useState<string>("")
-  const [uploadedPhoto, setUploadedPhoto] = useState<File | null>(null)
-  const [isGenerating, setIsGenerating] = useState(false)
+  const [selectedGender, setSelectedGender] = useState<string>("");
+  const [uploadedPhoto, setUploadedPhoto] = useState<File | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const handlePhotoUpload = (file: File) => {
-    setUploadedPhoto(file)
-  }
+    setUploadedPhoto(file);
+  };
 
   const handleStartGeneration = async () => {
-    if (!selectedGender || !uploadedPhoto) return
+    if (!selectedGender || !uploadedPhoto) return;
 
-    setIsGenerating(true)
+    setIsGenerating(true);
     // TODO: Implement API call to generate makeup styles
     // For now, simulate loading
     setTimeout(() => {
       // Navigate to style selection page
-      window.location.href = "/styles"
-    }, 3000)
-  }
+      window.location.href = "/styles";
+    }, 3000);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-card to-background">
@@ -40,7 +46,9 @@ export default function WelcomePage() {
           >
             Ejan
           </h1>
-          <p className="text-xl text-muted-foreground mb-2">あなたに最適なメイクアップを提案します</p>
+          <p className="text-xl text-muted-foreground mb-2">
+            あなたに最適なメイクアップを提案します
+          </p>
           <p className="text-lg text-foreground max-w-2xl mx-auto">
             AIがあなたの顔写真を分析し、パーソナライズされたメイクアップとヘアスタイルを提案します
           </p>
@@ -54,7 +62,9 @@ export default function WelcomePage() {
               <CardTitle>AI分析</CardTitle>
             </CardHeader>
             <CardContent>
-              <CardDescription>最新のAI技術であなたの顔の特徴を分析し、最適なスタイルを提案</CardDescription>
+              <CardDescription>
+                最新のAI技術であなたの顔の特徴を分析し、最適なスタイルを提案
+              </CardDescription>
             </CardContent>
           </Card>
 
@@ -64,7 +74,9 @@ export default function WelcomePage() {
               <CardTitle>パーソナライズ</CardTitle>
             </CardHeader>
             <CardContent>
-              <CardDescription>性別や好みに合わせて、あなただけのメイクアップスタイルをカスタマイズ</CardDescription>
+              <CardDescription>
+                性別や好みに合わせて、あなただけのメイクアップスタイルをカスタマイズ
+              </CardDescription>
             </CardContent>
           </Card>
 
@@ -74,7 +86,9 @@ export default function WelcomePage() {
               <CardTitle>ステップガイド</CardTitle>
             </CardHeader>
             <CardContent>
-              <CardDescription>写真と動画で分かりやすく、メイクアップの手順を詳しく解説</CardDescription>
+              <CardDescription>
+                写真と動画で分かりやすく、メイクアップの手順を詳しく解説
+              </CardDescription>
             </CardContent>
           </Card>
         </div>
@@ -90,8 +104,13 @@ export default function WelcomePage() {
           <CardContent className="space-y-8">
             {/* Gender Selection */}
             <div className="space-y-4">
-              <Label className="text-lg font-semibold">性別を選択してください</Label>
-              <RadioGroup value={selectedGender} onValueChange={setSelectedGender}>
+              <Label className="text-lg font-semibold">
+                性別を選択してください
+              </Label>
+              <RadioGroup
+                value={selectedGender}
+                onValueChange={setSelectedGender}
+              >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="male" id="male" />
                   <Label htmlFor="male">男性</Label>
@@ -109,9 +128,13 @@ export default function WelcomePage() {
 
             {/* Photo Upload */}
             <div className="space-y-4">
-              <Label className="text-lg font-semibold">顔写真をアップロード</Label>
+              <Label className="text-lg font-semibold">
+                顔写真をアップロード
+              </Label>
               <PhotoUpload onPhotoUpload={handlePhotoUpload} />
-              <p className="text-sm text-muted-foreground">※ 10MBまでのJPEG、PNG形式の画像をアップロードできます</p>
+              <p className="text-sm text-muted-foreground">
+                ※ 10MBまでのJPEG、PNG形式の画像をアップロードできます
+              </p>
             </div>
 
             {/* Generate Button */}
@@ -137,5 +160,5 @@ export default function WelcomePage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }
