@@ -72,11 +72,13 @@ class TutorialGenerationRequest(BaseModel):
     style_id: str = Field(
         ...,
         description="ID of the selected style",
+        alias="styleId"  # Accept camelCase from frontend
     )
     customization_text: Optional[str] = Field(
         None,
         max_length=1000,
         description="Optional customization text for the tutorial",
+        alias="customization"  # Accept camelCase from frontend
     )
 
 
