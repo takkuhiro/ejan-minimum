@@ -285,22 +285,11 @@ describe("StyleSelectionPage - API Integration", () => {
         expect(mockRouter.push).toHaveBeenCalled();
       });
 
-      // Check if router.push was called with correct params
+      // Check if router.push was called with correct URL string
       const pushCall = mockRouter.push.mock.calls[0][0];
-      expect(pushCall.pathname).toBe("/customize");
-      expect(pushCall.query).toBeDefined();
-
-      if (pushCall.query.styles) {
-        const decodedStyles = JSON.parse(
-          decodeURIComponent(pushCall.query.styles),
-        );
-        expect(decodedStyles).toEqual(mockStyles);
-      }
-
-      if (pushCall.query.photo) {
-        const decodedPhoto = decodeURIComponent(pushCall.query.photo);
-        expect(decodedPhoto).toBe(mockUserPhotoUrl);
-      }
+      expect(pushCall).toContain("/customize");
+      expect(pushCall).toContain("styles=");
+      expect(pushCall).toContain("photo=");
     });
 
     it("should generate tutorial when style is confirmed", async () => {

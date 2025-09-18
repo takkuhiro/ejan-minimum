@@ -25,7 +25,7 @@ export interface GenerateStylesResponse {
 // Tutorial generation request
 export interface GenerateTutorialRequest {
   styleId: string;
-  customizations?: string;
+  customization?: string;
 }
 
 // Tutorial step
@@ -33,24 +33,25 @@ export interface TutorialStep {
   stepNumber: number;
   title: string;
   description: string;
+  detailedInstructions?: string;
   imageUrl: string;
-  videoUrl?: string;
-  tools?: string[];
+  videoUrl: string;
+  tools: string[];
+  tips?: string[];
 }
 
 // Tutorial response
-export interface Tutorial {
+export interface TutorialResponse {
   id: string;
   title: string;
   description: string;
+  totalSteps: number;
   steps: TutorialStep[];
-  totalTime?: string;
+  status?: "PROCESSING" | "COMPLETED" | "FAILED";
 }
 
 // Tutorial generation response
-export interface GenerateTutorialResponse {
-  tutorial: Tutorial;
-}
+export interface GenerateTutorialResponse extends TutorialResponse {}
 
 // Style detail response
 export interface StyleDetailResponse {

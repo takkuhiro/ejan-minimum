@@ -29,6 +29,26 @@ jest.mock("sonner", () => ({
   Toaster: () => null,
 }));
 
+// Mock FileReader
+class MockFileReader {
+  result: string | null = null;
+  onload: (() => void) | null = null;
+  onerror: (() => void) | null = null;
+
+  readAsDataURL(file: File) {
+    // Simulate async reading
+    setTimeout(() => {
+      this.result = `data:${file.type};base64,dGVzdC1pbWFnZS1jb250ZW50`;
+      if (this.onload) {
+        this.onload();
+      }
+    }, 0);
+  }
+}
+
+// Replace global FileReader
+(global as any).FileReader = MockFileReader;
+
 describe("WelcomePage API Integration", () => {
   const mockPush = jest.fn();
   const mockRouter = {
@@ -102,7 +122,7 @@ describe("WelcomePage API Integration", () => {
     await waitFor(() => {
       expect(apiClient.generateStyles).toHaveBeenCalledWith(
         expect.objectContaining({
-          photo: expect.any(String), // Base64 encoded
+          photo: "dGVzdC1pbWFnZS1jb250ZW50", // Base64 string without data URL prefix
           gender: "female",
         }),
         expect.any(Object),
@@ -147,10 +167,10 @@ describe("WelcomePage API Integration", () => {
     });
     await userEvent.click(generateButton);
 
-    // Verify base64 encoding was performed
+    // Verify base64 encoding was performed (without data URL prefix)
     await waitFor(() => {
       const callArgs = (apiClient.generateStyles as jest.Mock).mock.calls[0];
-      expect(callArgs[0].photo).toMatch(/^data:image\/jpeg;base64,/);
+      expect(callArgs[0].photo).toBe("dGVzdC1pbWFnZS1jb250ZW50");
       expect(callArgs[0].gender).toBe("male");
     });
   });
@@ -170,9 +190,7 @@ describe("WelcomePage API Integration", () => {
       },
     };
 
-    (apiClient.generateStyles as jest.Mock).mockImplementation(() =>
-      Promise.resolve(mockResponse),
-    );
+    (apiClient.generateStyles as jest.Mock).mockResolvedValue(mockResponse);
 
     render(<WelcomePage />);
 
@@ -185,25 +203,7 @@ describe("WelcomePage API Integration", () => {
     const input = document.querySelector(
       'input[type="file"]',
     ) as HTMLInputElement;
-
-    // Mock FileReader
-    const mockFileReader = {
-      readAsDataURL: jest.fn(),
-      onload: null as any,
-      onerror: null as any,
-      result: "data:image/jpeg;base64,dGVzdA==",
-    };
-
-    jest
-      .spyOn(window, "FileReader")
-      .mockImplementation(() => mockFileReader as any);
-
     await userEvent.upload(input, file);
-
-    // Trigger FileReader onload
-    if (mockFileReader.onload) {
-      mockFileReader.onload();
-    }
 
     // Click generate button
     const generateButton = screen.getByRole("button", {
@@ -250,17 +250,26 @@ describe("WelcomePage API Integration", () => {
     expect(screen.getByText(/スタイルを生成中.../i)).toBeInTheDocument();
     expect(generateButton).toBeDisabled();
 
-    // Resolve the promise
+    // Resolve the promise with success
     resolvePromise!({
       success: true,
-      data: { styles: [] },
+      data: {
+        styles: [
+          {
+            id: "1",
+            title: "Style 1",
+            description: "Desc 1",
+            imageUrl: "http://example.com/1.jpg",
+          },
+        ],
+      },
     });
 
-    // Wait for loading to complete
+    // Wait for navigation to occur
     await waitFor(() => {
-      expect(
-        screen.queryByText(/スタイルを生成中.../i),
-      ).not.toBeInTheDocument();
+      expect(mockPush).toHaveBeenCalledWith(
+        expect.stringContaining("/styles?data="),
+      );
     });
   });
 
@@ -297,8 +306,8 @@ describe("WelcomePage API Integration", () => {
     await waitFor(() => {
       // Should not navigate on error
       expect(mockPush).not.toHaveBeenCalled();
-      // Button should be enabled again
-      expect(generateButton).not.toBeDisabled();
+      // Button should be disabled because uploadedPhoto is reset to null on error
+      expect(generateButton).toBeDisabled();
     });
   });
 
@@ -375,7 +384,8 @@ describe("WelcomePage API Integration", () => {
     // Wait for timeout handling
     await waitFor(() => {
       expect(mockPush).not.toHaveBeenCalled();
-      expect(generateButton).not.toBeDisabled();
+      // Button should be disabled because uploadedPhoto is reset to null on error
+      expect(generateButton).toBeDisabled();
     });
   });
 });

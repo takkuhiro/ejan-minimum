@@ -358,7 +358,7 @@ terraform/
   - **ドキュメント作成**: `docs/agents/5.3-**.md`に実装詳細を記録
   - _Requirements: 2.1, 2.2_
 
-- [ ] 6. フロントエンド・バックエンド統合
+- [x] 6. フロントエンド・バックエンド統合
 - [x] 6.1 API通信レイヤーの実装
   - **作成場所**: `apps/web/lib/api/client.ts`
   - **実装内容**:
@@ -404,7 +404,7 @@ terraform/
   - **ドキュメント作成**: `docs/agents/6.3-**.md`にAPI統合方法を記録
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
 
-- [ ] 6.4 チュートリアル生成・表示画面の統合
+- [x] 6.4 チュートリアル生成・表示画面の統合
   - **修正場所**: `apps/web/app/generating/page.tsx`, `apps/web/app/tutorial/page.tsx`
   - **実装内容**:
     - チュートリアル生成APIの呼び出し

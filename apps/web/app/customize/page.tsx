@@ -46,7 +46,7 @@ export default function CustomizePage() {
     const urlParams = new URLSearchParams(window.location.search);
     const styleId = urlParams.get("style");
 
-    if (styleId && mockStyleData[styleId as keyof typeof mockStyleData]) {
+    if (styleId && styleId in mockStyleData) {
       setSelectedStyleId(styleId);
       setCurrentStyle(mockStyleData[styleId as keyof typeof mockStyleData]);
     } else {

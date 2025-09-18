@@ -3,6 +3,7 @@ import {
   GenerateStylesResponse,
   GenerateTutorialRequest,
   GenerateTutorialResponse,
+  TutorialResponse,
   StyleDetailResponse,
   ApiError,
   ApiResponse,
@@ -40,9 +41,9 @@ export class ApiClient {
     const { timeout = this.timeout, maxRetries = 1, ...fetchOptions } = options;
 
     const url = `${this.baseUrl}${endpoint}`;
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      ...fetchOptions.headers,
+      ...(fetchOptions.headers as Record<string, string>),
     };
 
     if (this.apiKey) {
@@ -218,6 +219,31 @@ export class ApiClient {
       maxRetries: options?.maxRetries || 1,
     });
   }
+
+  async getTutorial(
+    tutorialId: string,
+    options?: RequestOptions,
+  ): Promise<ApiResponse<TutorialResponse>> {
+    return this.request<TutorialResponse>(`/api/tutorials/${tutorialId}`, {
+      method: "GET",
+      signal: options?.signal,
+      maxRetries: options?.maxRetries || 1,
+    });
+  }
+
+  async getTutorialStatus(
+    tutorialId: string,
+    options?: RequestOptions,
+  ): Promise<ApiResponse<{ status: string; progress?: number }>> {
+    return this.request<{ status: string; progress?: number }>(
+      `/api/tutorials/${tutorialId}/status`,
+      {
+        method: "GET",
+        signal: options?.signal,
+        maxRetries: options?.maxRetries || 1,
+      },
+    );
+  }
 }
 
 // Singleton instance
@@ -242,4 +268,10 @@ export const apiClient = {
 
   getStyleDetail: (styleId: string, options?: RequestOptions) =>
     getApiClient().getStyleDetail(styleId, options),
+
+  getTutorial: (tutorialId: string, options?: RequestOptions) =>
+    getApiClient().getTutorial(tutorialId, options),
+
+  getTutorialStatus: (tutorialId: string, options?: RequestOptions) =>
+    getApiClient().getTutorialStatus(tutorialId, options),
 };

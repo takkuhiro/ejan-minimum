@@ -148,34 +148,32 @@ describe("ApiClient", () => {
   describe("generateTutorial", () => {
     const mockRequest: GenerateTutorialRequest = {
       styleId: "style1",
-      customizations: "Add more emphasis on contouring",
+      customization: "Add more emphasis on contouring",
     };
 
     const mockResponse: GenerateTutorialResponse = {
-      tutorial: {
-        id: "tutorial1",
-        title: "Natural Makeup Tutorial",
-        description: "Step-by-step guide for natural makeup",
-        steps: [
-          {
-            stepNumber: 1,
-            title: "Prep your skin",
-            description: "Cleanse and moisturize",
-            imageUrl: "https://storage.googleapis.com/bucket/step1.jpg",
-            videoUrl: "https://storage.googleapis.com/bucket/step1.mp4",
-            tools: ["Cleanser", "Moisturizer"],
-          },
-          {
-            stepNumber: 2,
-            title: "Apply foundation",
-            description: "Even out skin tone",
-            imageUrl: "https://storage.googleapis.com/bucket/step2.jpg",
-            videoUrl: "https://storage.googleapis.com/bucket/step2.mp4",
-            tools: ["Foundation", "Beauty sponge"],
-          },
-        ],
-        totalTime: "15 minutes",
-      },
+      id: "tutorial1",
+      title: "Natural Makeup Tutorial",
+      description: "Step-by-step guide for natural makeup",
+      totalSteps: 3,
+      steps: [
+        {
+          stepNumber: 1,
+          title: "Prep your skin",
+          description: "Cleanse and moisturize",
+          imageUrl: "https://storage.googleapis.com/bucket/step1.jpg",
+          videoUrl: "https://storage.googleapis.com/bucket/step1.mp4",
+          tools: ["Cleanser", "Moisturizer"],
+        },
+        {
+          stepNumber: 2,
+          title: "Apply foundation",
+          description: "Even out skin tone",
+          imageUrl: "https://storage.googleapis.com/bucket/step2.jpg",
+          videoUrl: "https://storage.googleapis.com/bucket/step2.mp4",
+          tools: ["Foundation", "Beauty sponge"],
+        },
+      ],
     };
 
     it("should successfully generate tutorial", async () => {

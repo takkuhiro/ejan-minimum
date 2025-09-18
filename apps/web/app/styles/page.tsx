@@ -114,10 +114,9 @@ export default function StyleSelectionPage() {
       params.set("photo", encodeURIComponent(userPhotoUrl));
     }
 
-    router.push({
-      pathname: "/customize",
-      query: Object.fromEntries(params),
-    } as { pathname: string; query: Record<string, string> });
+    const url = new URL("/customize", window.location.origin);
+    params.forEach((value, key) => url.searchParams.set(key, value));
+    router.push(url.pathname + url.search);
   };
 
   const handleConfirmSelection = async () => {
@@ -136,10 +135,7 @@ export default function StyleSelectionPage() {
 
       if (response.success) {
         // Save tutorial data to localStorage
-        localStorage.setItem(
-          "currentTutorial",
-          JSON.stringify(response.data.tutorial),
-        );
+        localStorage.setItem("currentTutorial", JSON.stringify(response.data));
         localStorage.setItem("selectedStyleId", selectedStyle.id);
 
         toast.dismiss(loadingToast);
