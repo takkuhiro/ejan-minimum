@@ -15,6 +15,15 @@ import { Label } from "@/components/ui/label";
 import { Upload, Sparkles, Users, Palette } from "lucide-react";
 import { PhotoUpload } from "@/components/photo-upload";
 import { apiClient } from "@/lib/api/client";
+import {
+  ApiClientError,
+  getErrorMessage,
+  isNetworkError,
+  isTimeoutError,
+  isValidationError,
+  isServerError,
+  retryWithBackoff,
+} from "@/lib/api/error-handler";
 import { toast } from "sonner";
 import type { Gender } from "@/types/api";
 
@@ -52,42 +61,112 @@ export default function WelcomePage() {
     setIsGenerating(true);
 
     try {
+      // Validate file size before conversion
+      const sizeInMB = uploadedPhoto.size / (1024 * 1024);
+      if (sizeInMB > 10) {
+        toast.error(
+          "ファイルサイズが10MBを超えています。小さいファイルを選択してください。",
+        );
+        setIsGenerating(false);
+        return;
+      }
+
       // Convert file to base64
       const base64Photo = await fileToBase64(uploadedPhoto);
 
       // Show loading toast
       const loadingToast = toast.loading("スタイルを生成中...");
 
-      // Call API to generate styles
-      const response = await apiClient.generateStyles(
-        {
-          photo: base64Photo,
-          gender: selectedGender as Gender,
-        },
+      // Call API to generate styles with retry logic
+      const response = await retryWithBackoff(
+        () =>
+          apiClient.generateStyles(
+            {
+              photo: base64Photo,
+              gender: selectedGender as Gender,
+            },
+            {
+              maxRetries: 1, // retryWithBackoff will handle additional retries
+            },
+          ),
         {
           maxRetries: 3,
+          baseDelay: 1000,
+          maxDelay: 10000,
         },
       );
 
       toast.dismiss(loadingToast);
 
       if (response.success) {
+        toast.success("スタイル生成に成功しました！");
         // Navigate to styles page with generated data
         const encodedData = encodeURIComponent(JSON.stringify(response.data));
         router.push(`/styles?data=${encodedData}`);
       } else {
-        // Handle error
-        toast.error(response.error.message || "スタイル生成に失敗しました");
+        // Handle specific error types
+        const error = response.error;
+        let errorMessage = "スタイル生成に失敗しました";
+
+        if (isValidationError(error)) {
+          errorMessage = "入力データに問題があります: " + error.message;
+        } else if (isNetworkError(error)) {
+          errorMessage = "ネットワーク接続を確認してください";
+        } else if (isTimeoutError(error)) {
+          errorMessage = "処理がタイムアウトしました。もう一度お試しください";
+        } else if (isServerError(error)) {
+          errorMessage =
+            "サーバーエラーが発生しました。しばらく待ってから再試行してください";
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+
+        toast.error(errorMessage, {
+          duration: 5000,
+          action: {
+            label: "再試行",
+            onClick: () => handleStartGeneration(),
+          },
+        });
+
         setIsGenerating(false);
-        // Reset upload state on error to allow re-upload
-        setUploadedPhoto(null);
+        // Don't reset photo on retryable errors
+        if (isValidationError(error)) {
+          setUploadedPhoto(null);
+        }
       }
     } catch (error) {
       console.error("Failed to generate styles:", error);
-      toast.error("エラーが発生しました。もう一度お試しください。");
+
+      // Handle unexpected errors
+      const errorMessage = getErrorMessage(error);
+
+      if (error instanceof ApiClientError) {
+        const apiError = error.error;
+        if (isNetworkError(apiError)) {
+          toast.error("ネットワーク接続を確認してください", {
+            duration: 5000,
+            action: {
+              label: "再試行",
+              onClick: () => handleStartGeneration(),
+            },
+          });
+        } else if (isTimeoutError(apiError)) {
+          toast.error("処理がタイムアウトしました", {
+            duration: 5000,
+            action: {
+              label: "再試行",
+              onClick: () => handleStartGeneration(),
+            },
+          });
+        } else {
+          toast.error(errorMessage, { duration: 5000 });
+        }
+      } else {
+        toast.error(`予期しないエラー: ${errorMessage}`, { duration: 5000 });
+      }
+
       setIsGenerating(false);
-      // Reset upload state on error to allow re-upload
-      setUploadedPhoto(null);
     }
   };
 

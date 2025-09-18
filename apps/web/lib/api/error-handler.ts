@@ -72,3 +72,40 @@ export function calculateBackoffDelay(
   const jitter = Math.random() * 0.3 * delay;
   return Math.round(delay + jitter);
 }
+
+// Utility function to wait for a specified time
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Generic retry function with exponential backoff
+export async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  config: RetryConfig = DEFAULT_RETRY_CONFIG,
+): Promise<T> {
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= config.maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+
+      // Check if error is retryable
+      if (isApiError(error) && shouldRetry(error.error)) {
+        // If this is not the last attempt, wait and retry
+        if (attempt < config.maxRetries) {
+          const backoffDelay = calculateBackoffDelay(attempt, config);
+          await delay(backoffDelay);
+          continue;
+        }
+      }
+
+      // Non-retryable error or last attempt - throw immediately
+      throw error;
+    }
+  }
+
+  // This should never be reached, but TypeScript needs it
+  throw lastError;
+}

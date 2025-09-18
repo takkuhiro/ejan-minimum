@@ -13,6 +13,14 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api/client";
+import {
+  ApiClientError,
+  getErrorMessage,
+  isNetworkError,
+  isTimeoutError,
+  isServerError,
+  retryWithBackoff,
+} from "@/lib/api/error-handler";
 import type { Style, StyleDetailResponse } from "@/types/api";
 
 export default function StyleSelectionPage() {
@@ -87,18 +95,38 @@ export default function StyleSelectionPage() {
     // Save selection to localStorage for recovery
     localStorage.setItem("selectedStyle", JSON.stringify(style));
 
-    // Fetch style details
+    // Fetch style details with retry logic
     setIsLoadingDetails(true);
     try {
-      const response = await apiClient.getStyleDetail(style.id);
+      const response = await retryWithBackoff(
+        () => apiClient.getStyleDetail(style.id),
+        {
+          maxRetries: 2,
+          baseDelay: 500,
+          maxDelay: 3000,
+        },
+      );
+
       if (response.success) {
         setSelectedStyleDetails(response.data.style);
       } else {
-        toast.error("スタイルの詳細を取得できませんでした");
+        const error = response.error;
+        let errorMessage = "スタイルの詳細を取得できませんでした";
+
+        if (isNetworkError(error)) {
+          errorMessage = "ネットワーク接続を確認してください";
+        } else if (isTimeoutError(error)) {
+          errorMessage = "リクエストがタイムアウトしました";
+        } else if (isServerError(error)) {
+          errorMessage = "サーバーエラーが発生しました";
+        }
+
+        toast.error(errorMessage, { duration: 3000 });
       }
     } catch (error) {
       console.error("Error fetching style details:", error);
-      toast.error("スタイルの詳細を取得できませんでした");
+      const errorMessage = getErrorMessage(error);
+      toast.error(`エラー: ${errorMessage}`, { duration: 3000 });
     } finally {
       setIsLoadingDetails(false);
     }
@@ -131,27 +159,69 @@ export default function StyleSelectionPage() {
         ...(customizationText && { customizations: customizationText }),
       };
 
-      const response = await apiClient.generateTutorial(request);
+      const response = await retryWithBackoff(
+        () => apiClient.generateTutorial(request),
+        {
+          maxRetries: 3,
+          baseDelay: 1000,
+          maxDelay: 10000,
+        },
+      );
+
+      toast.dismiss(loadingToast);
 
       if (response.success) {
         // Save tutorial data to localStorage
         localStorage.setItem("currentTutorial", JSON.stringify(response.data));
         localStorage.setItem("selectedStyleId", selectedStyle.id);
 
-        toast.dismiss(loadingToast);
         toast.success("チュートリアルの生成を開始しました");
 
         // Navigate to generating page
         router.push("/generating");
       } else {
-        throw new Error(response.error.message);
+        const error = response.error;
+        let errorMessage = "チュートリアルの生成に失敗しました";
+
+        if (isNetworkError(error)) {
+          errorMessage = "ネットワーク接続を確認してください";
+        } else if (isTimeoutError(error)) {
+          errorMessage = "処理がタイムアウトしました。もう一度お試しください";
+        } else if (isServerError(error)) {
+          errorMessage =
+            "サーバーエラーが発生しました。しばらく待ってから再試行してください";
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+
+        toast.error(errorMessage, {
+          duration: 5000,
+          action: {
+            label: "再試行",
+            onClick: () => handleConfirmSelection(),
+          },
+        });
       }
     } catch (error) {
       console.error("Error generating tutorial:", error);
       toast.dismiss(loadingToast);
-      toast.error(
-        "チュートリアルの生成に失敗しました。もう一度お試しください。",
-      );
+
+      if (error instanceof ApiClientError) {
+        const apiError = error.error;
+        if (isNetworkError(apiError) || isTimeoutError(apiError)) {
+          toast.error("接続エラーが発生しました", {
+            duration: 5000,
+            action: {
+              label: "再試行",
+              onClick: () => handleConfirmSelection(),
+            },
+          });
+        } else {
+          toast.error(getErrorMessage(error), { duration: 5000 });
+        }
+      } else {
+        toast.error("予期しないエラーが発生しました", { duration: 5000 });
+      }
     } finally {
       setIsGenerating(false);
     }
