@@ -119,7 +119,13 @@ export default function StyleSelectionPage() {
   };
 
   const handleConfirmSelection = async () => {
-    if (!selectedStyle) return;
+    if (!selectedStyle) {
+      console.error("handleConfirmSelection: No style selected");
+      return;
+    }
+
+    console.log("handleConfirmSelection: Starting with style:", selectedStyle.id);
+    console.log("handleConfirmSelection: Customization text:", customizationText);
 
     setIsGenerating(true);
     const loadingToast = toast.loading("チュートリアルを生成中...");
@@ -127,8 +133,10 @@ export default function StyleSelectionPage() {
     try {
       const request = {
         styleId: selectedStyle.id,
-        ...(customizationText && { customizations: customizationText }),
+        ...(customizationText && { customization: customizationText }),
       };
+
+      console.log("handleConfirmSelection: API request:", request);
 
       const response = await retryWithBackoff(
         () => apiClient.generateTutorial(request),
@@ -139,29 +147,43 @@ export default function StyleSelectionPage() {
         },
       );
 
+      console.log("handleConfirmSelection: API response:", response);
       toast.dismiss(loadingToast);
 
       if (response.success) {
+        console.log("handleConfirmSelection: Success, tutorial data:", response.data);
+
         // Save tutorial data to localStorage
         localStorage.setItem("currentTutorial", JSON.stringify(response.data));
         localStorage.setItem("selectedStyleId", selectedStyle.id);
 
         toast.success("チュートリアルの生成を開始しました");
 
-        // Navigate to generating page
-        router.push("/generating");
+        // Navigate to generating page with styleId and customization
+        const params = new URLSearchParams({
+          styleId: selectedStyle.id,
+          ...(customizationText && { customization: customizationText }),
+        });
+        const navigateUrl = `/generating?${params.toString()}`;
+        console.log("handleConfirmSelection: Navigating to:", navigateUrl);
+        router.push(navigateUrl);
       } else {
+        console.error("handleConfirmSelection: API request failed:", response.error);
         const error = response.error;
         let errorMessage = "チュートリアルの生成に失敗しました";
 
         if (isNetworkError(error)) {
+          console.error("handleConfirmSelection: Network error");
           errorMessage = "ネットワーク接続を確認してください";
         } else if (isTimeoutError(error)) {
+          console.error("handleConfirmSelection: Timeout error");
           errorMessage = "処理がタイムアウトしました。もう一度お試しください";
         } else if (isServerError(error)) {
+          console.error("handleConfirmSelection: Server error, status:", error.statusCode);
           errorMessage =
             "サーバーエラーが発生しました。しばらく待ってから再試行してください";
         } else if (error.message) {
+          console.error("handleConfirmSelection: Error message:", error.message);
           errorMessage = error.message;
         }
 
@@ -174,7 +196,12 @@ export default function StyleSelectionPage() {
         });
       }
     } catch (error) {
-      console.error("Error generating tutorial:", error);
+      console.error("handleConfirmSelection: Unexpected error:", error);
+      console.error("handleConfirmSelection: Error details:", {
+        name: error instanceof Error ? error.name : "Unknown",
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       toast.dismiss(loadingToast);
 
       if (error instanceof ApiClientError) {

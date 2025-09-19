@@ -6,7 +6,7 @@ import logging
 from fastapi import APIRouter, HTTPException, status
 
 from app.models.request import TutorialGenerationRequest
-from app.models.response import ErrorResponse, TutorialResponse
+from app.models.response import ErrorResponse, TutorialResponse, TutorialStatusResponse
 from app.services.tutorial_generation import TutorialGenerationService
 
 
@@ -45,6 +45,8 @@ async def generate_tutorial(request: TutorialGenerationRequest) -> TutorialRespo
 
         # Generate tutorial
         tutorial = await service.generate_tutorial(
+            raw_description=request.raw_description,
+            original_image_url=request.original_image_url,
             style_id=request.style_id,
             customization_text=request.customization_text,
         )
@@ -77,5 +79,68 @@ async def generate_tutorial(request: TutorialGenerationRequest) -> TutorialRespo
             detail={
                 "error": "tutorial_generation_failed",
                 "message": f"Failed to generate tutorial: {str(e)}",
+            },
+        )
+
+
+@router.get(
+    "/{tutorial_id}/status",
+    response_model=TutorialStatusResponse,
+    responses={
+        404: {"model": ErrorResponse, "description": "Tutorial not found"},
+        500: {"model": ErrorResponse, "description": "Status check failed"},
+    },
+)
+async def get_tutorial_status(tutorial_id: str) -> TutorialStatusResponse:
+    """
+    Get the status of a tutorial generation.
+
+    This endpoint checks the progress of video generation for each step
+    of the tutorial.
+
+    Args:
+        tutorial_id: ID of the tutorial to check
+
+    Returns:
+        TutorialStatusResponse: Current status and progress of the tutorial
+
+    Raises:
+        HTTPException: If tutorial not found or status check fails
+    """
+    try:
+        # Initialize service
+        service = TutorialGenerationService()
+
+        # Check tutorial status
+        status_response = await service.check_tutorial_status(tutorial_id)
+
+        return status_response
+
+    except ValueError as e:
+        if "not found" in str(e).lower():
+            logger.error(f"Tutorial not found: {tutorial_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "error": "tutorial_not_found",
+                    "message": f"Tutorial {tutorial_id} not found",
+                },
+            )
+        else:
+            logger.error(f"Status check failed: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail={
+                    "error": "status_check_failed",
+                    "message": str(e),
+                },
+            )
+    except Exception as e:
+        logger.error(f"Status check failed: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": "status_check_failed",
+                "message": f"Failed to check tutorial status: {str(e)}",
             },
         )

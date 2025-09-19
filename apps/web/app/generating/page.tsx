@@ -95,8 +95,12 @@ export default function GeneratingPage() {
   );
 
   const generateTutorial = useCallback(async () => {
-    if (!styleId) return;
+    if (!styleId) {
+      console.error("generateTutorial: styleId is missing");
+      return;
+    }
 
+    console.log("generateTutorial: Starting with styleId:", styleId, "customization:", customization);
     setIsGenerating(true);
     setError(null);
 
@@ -107,37 +111,55 @@ export default function GeneratingPage() {
       // Start progress animation
       startProgressAnimation();
 
+      // Log API request details
+      console.log("generateTutorial: Calling API with request:", {
+        styleId,
+        customization,
+      });
+
       // Call generate tutorial API
       const response = await apiClient.generateTutorial(
         { styleId, customization },
         { signal: abortControllerRef.current.signal },
       );
 
+      console.log("generateTutorial: API response:", response);
+
       if (!response.success) {
+        console.error("generateTutorial: API request failed:", response.error);
         handleError(response.error);
         return;
       }
 
       const { data } = response;
+      console.log("generateTutorial: Tutorial data:", data);
       setTutorialId(data.id);
 
-      // Check if generation is complete or needs polling
-      if (data.status === "COMPLETED") {
+      // Since backend returns completed tutorial data directly,
+      // we can redirect to the tutorial page immediately
+      if (data.id && data.steps && data.steps.length > 0) {
+        console.log("generateTutorial: Tutorial is ready, redirecting to tutorial page");
         // Tutorial is ready, redirect immediately
         handleTutorialComplete(data.id);
-      } else if (data.status === "PROCESSING") {
-        // Start polling for status
+      } else {
+        // If for some reason the tutorial is not complete,
+        // we can start polling (though this shouldn't happen with current backend)
+        console.log("generateTutorial: Tutorial needs polling, starting polling");
         startPolling(data.id);
-      } else if (data.status === "FAILED") {
-        setError("チュートリアルの生成に失敗しました");
       }
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") {
+        console.log("generateTutorial: Request was aborted");
         // Request was aborted, ignore
         return;
       }
+      console.error("generateTutorial: Unexpected error:", err);
+      console.error("generateTutorial: Error details:", {
+        name: err instanceof Error ? err.name : "Unknown",
+        message: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
+      });
       setError("エラーが発生しました");
-      console.error("Tutorial generation error:", err);
     }
   }, [styleId, customization, handleTutorialComplete, startPolling]);
 
@@ -148,11 +170,19 @@ export default function GeneratingPage() {
       return;
     }
 
-    // Start generation
-    generateTutorial();
+    // Prevent double execution in development
+    let isMounted = true;
+
+    const startGeneration = async () => {
+      if (!isMounted) return;
+      await generateTutorial();
+    };
+
+    startGeneration();
 
     // Cleanup on unmount
     return () => {
+      isMounted = false;
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
       }
@@ -160,7 +190,7 @@ export default function GeneratingPage() {
         abortControllerRef.current.abort();
       }
     };
-  }, [styleId, generateTutorial]);
+  }, [styleId]); // Remove generateTutorial from dependencies to prevent re-execution
 
   const startProgressAnimation = () => {
     const totalDuration = generationSteps.reduce(
@@ -195,16 +225,25 @@ export default function GeneratingPage() {
   };
 
   const handleError = (error: ApiError) => {
+    console.error("handleError: Processing error:", error);
     setIsGenerating(false);
 
     if (error.error === "TimeoutError") {
+      console.error("handleError: Timeout error detected");
       setError("処理に時間がかかっています");
       toast.error("タイムアウトしました。もう一度お試しください。");
     } else if (error.error === "ServerError") {
+      console.error("handleError: Server error detected");
       setError("チュートリアルの生成に失敗しました");
       toast.error("サーバーエラーが発生しました。");
     } else {
-      setError("エラーが発生しました");
+      console.error("handleError: Other error:", error.error, error.message);
+      // Don't show abort errors to the user
+      if (error.error === "AbortError") {
+        console.log("handleError: Ignoring abort error");
+        return;
+      }
+      setError(`エラーが発生しました: ${error.message || error.error || "不明なエラー"}`);
       toast.error(error.message || "予期せぬエラーが発生しました。");
     }
   };

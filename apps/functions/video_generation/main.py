@@ -36,15 +36,17 @@ def generate_video(request) -> Dict[str, Any]:
         if not request_data:
             return {"status": "failed", "error": "No JSON data provided"}
 
-        # 必須フィールドの検証
-        required_fields = ["image_url", "prompt"]
-        for field in required_fields:
-            if field not in request_data:
-                return {"status": "failed", "error": f"Missing required field: {field}"}
+        # 必須フィールドの検証（promptまたはinstruction_textのいずれかが必要）
+        image_url = request_data.get("image_url")
+        prompt = request_data.get("prompt") or request_data.get("instruction_text")
 
-        image_url = request_data["image_url"]
-        prompt = request_data["prompt"]
+        if not image_url:
+            return {"status": "failed", "error": "Missing required field: image_url"}
+        if not prompt:
+            return {"status": "failed", "error": "Missing required field: prompt or instruction_text"}
+
         step_number = request_data.get("step_number", 1)
+        target_gcs_path = request_data.get("target_gcs_path")
 
         # Google API クライアントの初期化
         api_key = os.getenv("GOOGLE_API_KEY")
@@ -90,9 +92,21 @@ def generate_video(request) -> Dict[str, Any]:
         storage_client = storage.Client()
         bucket = storage_client.bucket(bucket_name)
 
-        # ユニークなファイル名生成
-        filename = generate_unique_filename(f"video-step-{step_number}", "mp4")
-        blob = bucket.blob(f"videos/{filename}")
+        # ファイルパスを決定
+        if target_gcs_path:
+            # 指定されたパスを使用（bucketプレフィックスを除去）
+            if target_gcs_path.startswith(f"gs://{bucket_name}/"):
+                blob_path = target_gcs_path[len(f"gs://{bucket_name}/"):]
+            elif target_gcs_path.startswith(f"{bucket_name}/"):
+                blob_path = target_gcs_path[len(f"{bucket_name}/"):]
+            else:
+                blob_path = target_gcs_path
+        else:
+            # デフォルトのパスを使用
+            filename = generate_unique_filename(f"video-step-{step_number}", "mp4")
+            blob_path = f"videos/{filename}"
+
+        blob = bucket.blob(blob_path)
 
         # 動画データをアップロード
         blob.upload_from_string(video_data, content_type="video/mp4")

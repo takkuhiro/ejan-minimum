@@ -3,6 +3,7 @@
 import asyncio
 import logging
 import os
+from typing import Optional, Dict, Any
 
 import httpx
 
@@ -21,13 +22,21 @@ class CloudFunctionClient:
         )
         self.timeout = 600  # 10 minutes for video generation
 
-    async def generate_video(self, image_url: str, instruction_text: str) -> str:
+    async def generate_video(
+        self,
+        image_url: str,
+        instruction_text: str,
+        target_gcs_path: Optional[str] = None,
+        step_number: Optional[int] = None,
+    ) -> str:
         """
         Call Cloud Function to generate a video.
 
         Args:
             image_url: URL of the source image
             instruction_text: Text instruction for video generation
+            target_gcs_path: Optional target path in GCS for the video
+            step_number: Optional step number for tracking
 
         Returns:
             URL of the generated video
@@ -38,12 +47,21 @@ class CloudFunctionClient:
         """
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
-                payload = {
+                payload: Dict[str, Any] = {
                     "image_url": image_url,
                     "instruction_text": instruction_text,
+                    "prompt": instruction_text,  # Alias for compatibility
                 }
 
-                logger.info("Calling Cloud Function for video generation")
+                # Add optional parameters if provided
+                if target_gcs_path:
+                    payload["target_gcs_path"] = target_gcs_path
+                if step_number is not None:
+                    payload["step_number"] = step_number
+
+                logger.info(
+                    f"Calling Cloud Function for video generation (step {step_number})"
+                )
                 response = await client.post(
                     self.function_url,
                     json=payload,

@@ -5,6 +5,7 @@ This module contains Pydantic models for API responses,
 including style generation results and tutorial data.
 """
 
+from enum import Enum
 from typing import List, Optional, Dict, Any
 
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -175,6 +176,51 @@ class TutorialResponse(BaseModel):
                 f"total_steps ({self.total_steps}) must match the number of steps ({len(self.steps)})"
             )
         return self
+
+
+class StepStatus(str, Enum):
+    """Status of a tutorial step."""
+
+    PENDING = "pending"
+    PROCESSING = "processing"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+class StepStatusInfo(BaseModel):
+    """Status information for a single tutorial step."""
+
+    step_number: int = Field(..., gt=0, description="Step number", alias="stepNumber")
+    status: StepStatus = Field(..., description="Current status of the step")
+    video_url: Optional[str] = Field(
+        None, description="URL to the generated video if completed", alias="videoUrl"
+    )
+    error_message: Optional[str] = Field(
+        None, description="Error message if failed", alias="errorMessage"
+    )
+
+    model_config = {"populate_by_name": True}
+
+
+class TutorialStatusResponse(BaseModel):
+    """Response model for tutorial status check."""
+
+    tutorial_id: str = Field(
+        ..., description="Unique identifier for the tutorial", alias="tutorialId"
+    )
+    status: str = Field(
+        ..., description="Overall status (pending, processing, completed, failed)"
+    )
+    progress: int = Field(..., ge=0, le=100, description="Progress percentage (0-100)")
+    steps: List[StepStatusInfo] = Field(..., description="Status of each step")
+    created_at: str = Field(
+        ..., description="ISO timestamp of creation", alias="createdAt"
+    )
+    updated_at: str = Field(
+        ..., description="ISO timestamp of last update", alias="updatedAt"
+    )
+
+    model_config = {"populate_by_name": True}
 
 
 class ErrorResponse(BaseModel):

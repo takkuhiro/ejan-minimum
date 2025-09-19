@@ -16,7 +16,7 @@ Do your hair now. First, Wet your hair: First, I'll lightly wet all of your hair
 """
 
 # Load the image using the Image class
-image_path = "./images/IMG_1206.jpg"
+image_path = "./resources/images/IMG_1206.jpg"
 with open(image_path, "rb") as image_file:
     image_bytes = image_file.read()
 
@@ -39,5 +39,5 @@ while not operation.done:
 # Download the video.
 video = operation.response.generated_videos[0]
 client.files.download(file=video.video)
-video.video.save("videos/veo3_with_image_input.mp4")
+video.video.save("resources/videos/veo3_with_image_input.mp4")
 print("Generated video saved to veo3_with_image_input.mp4")

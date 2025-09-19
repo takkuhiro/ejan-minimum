@@ -78,7 +78,7 @@ Provide a complete tutorial with:
 4. Required tools and products
 5. Overall difficulty level (beginner, intermediate, or advanced)
 
-Make the instructions clear and easy to follow for someone learning this style."""
+Make the Japanese instructions clear and easy to follow for someone learning this style."""
 
     if gender:
         gender_text = {
@@ -105,7 +105,9 @@ class TutorialStructureService:
             ai_client: AI client for Gemini API.
         """
         self.ai_client = ai_client
-        self.model_name = "gemini-2.5-flash"
+        self.model_name = (
+            "gemini-2.0-flash-exp"  # または gemini-1.5-flash など利用可能なモデル
+        )
 
     async def generate_tutorial_structure(
         self,
@@ -130,19 +132,22 @@ class TutorialStructureService:
             # Generate prompt
             prompt = generate_tutorial_prompt(style_description, gender, custom_request)
 
-            # Get response schema
-            schema = self.get_response_schema()
-
-            # Call AI API with structured output
+            # Call AI API with structured output using Pydantic model
             response_data = self.ai_client.generate_structured_output(
-                model=self.model_name, prompt=prompt, response_schema=schema
+                model=self.model_name,
+                prompt=prompt,
+                response_schema=MakeupProcedure,  # Pass the Pydantic model class directly
             )
 
-            # Parse and validate response
-            try:
-                procedure = MakeupProcedure(**response_data)
-            except Exception as e:
-                raise TutorialStructureError(f"Invalid tutorial structure: {e}")
+            # If response is already a MakeupProcedure object, use it
+            if isinstance(response_data, MakeupProcedure):
+                procedure = response_data
+            else:
+                # Otherwise parse from dict
+                try:
+                    procedure = MakeupProcedure(**response_data)
+                except Exception as e:
+                    raise TutorialStructureError(f"Invalid tutorial structure: {e}")
 
             # Additional validation
             if not self.validate_procedure(procedure):

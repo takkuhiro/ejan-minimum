@@ -69,16 +69,27 @@ class PhotoUploadRequest(BaseModel):
 class TutorialGenerationRequest(BaseModel):
     """Request model for tutorial generation."""
 
-    style_id: str = Field(
+    raw_description: str = Field(
         ...,
-        description="ID of the selected style",
-        alias="styleId"  # Accept camelCase from frontend
+        max_length=5000,
+        description="Raw description text for tutorial generation",
+        alias="rawDescription",  # Accept camelCase from frontend
+    )
+    original_image_url: str = Field(
+        ...,
+        description="URL of the original/base image",
+        alias="originalImageUrl",  # Accept camelCase from frontend
+    )
+    style_id: Optional[str] = Field(
+        None,
+        description="ID of the selected style (deprecated)",
+        alias="styleId",  # Accept camelCase from frontend
     )
     customization_text: Optional[str] = Field(
         None,
         max_length=1000,
         description="Optional customization text for the tutorial",
-        alias="customization"  # Accept camelCase from frontend
+        alias="customization",  # Accept camelCase from frontend
     )
 
 

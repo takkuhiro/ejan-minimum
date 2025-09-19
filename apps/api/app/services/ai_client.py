@@ -2,7 +2,7 @@
 
 import json
 import time
-from typing import Any, Dict, Optional, Union, List
+from typing import Any, Optional, Union, List
 from google import genai
 from PIL import Image
 
@@ -186,33 +186,40 @@ class AIClient:
         return model in self.SUPPORTED_MODELS
 
     def generate_structured_output(
-        self, model: str, prompt: str, response_schema: Dict[str, Any], **kwargs: Any
-    ) -> Dict[str, Any]:
-        """Generate structured output with JSON schema.
+        self, model: str, prompt: str, response_schema: Any, **kwargs: Any
+    ) -> Any:
+        """Generate structured output with JSON schema or Pydantic model.
 
         Args:
             model: Model name to use.
             prompt: Text prompt for generation.
-            response_schema: JSON schema for response structure.
+            response_schema: Pydantic model class or JSON schema for response structure.
             **kwargs: Additional parameters for the API call.
 
         Returns:
-            Parsed JSON response.
+            Parsed response object or dict.
 
         Raises:
-            AIClientAPIError: If API call fails or response is invalid JSON.
+            AIClientAPIError: If API call fails or response is invalid.
         """
         try:
-            # Note: response_mime_type and response_schema might not be in the type hints
-            # but are supported in the actual API
-            response = self.client.models.generate_content(  # type: ignore[call-arg]
+            # Use the correct format as shown in the documentation
+            response = self.client.models.generate_content(
                 model=model,
-                contents=prompt,  # Pass string directly, not as list
-                response_mime_type="application/json",
-                response_schema=response_schema,
+                contents=prompt,
+                config={
+                    "response_mime_type": "application/json",
+                    "response_schema": response_schema,
+                },
                 **kwargs,
             )
+            print("\n\nPASS\n\n: response", response)
 
+            # If response has parsed attribute, use it
+            if hasattr(response, "parsed"):
+                return response.parsed
+
+            # Otherwise extract text and parse JSON
             text_response = self.extract_text_from_response(response)
 
             try:

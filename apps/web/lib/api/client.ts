@@ -52,6 +52,11 @@ export class ApiClient {
       headers["X-API-Key"] = this.apiKey;
     }
 
+    console.log(`API Request: ${fetchOptions.method || 'GET'} ${url}`);
+    if (fetchOptions.body) {
+      console.log("Request body:", fetchOptions.body);
+    }
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         const controller = new AbortController();
@@ -71,6 +76,8 @@ export class ApiClient {
           fetchOptions.signal.addEventListener("abort", abortHandler);
         }
 
+        console.log(`API Request attempt ${attempt}/${maxRetries} - Timeout: ${timeout}ms`);
+
         const response = await Promise.race([
           fetch(url, {
             ...fetchOptions,
@@ -82,8 +89,11 @@ export class ApiClient {
 
         if (timeoutId) clearTimeout(timeoutId);
 
+        console.log(`API Response: ${response.status} ${response.statusText}`);
+
         if (!response.ok) {
           const errorData = await this.parseErrorResponse(response);
+          console.error("API Error response:", errorData);
           return {
             success: false,
             error: errorData,
@@ -91,13 +101,17 @@ export class ApiClient {
         }
 
         const data = await response.json();
+        console.log("API Success response:", data);
         return {
           success: true,
           data: data as T,
         };
       } catch (error) {
+        console.error(`API Request error (attempt ${attempt}/${maxRetries}):`, error);
+
         // Check if timeout
         if (error instanceof Error && error.message === "TimeoutError") {
+          console.error("API Timeout error detected");
           return {
             success: false,
             error: {
@@ -112,6 +126,7 @@ export class ApiClient {
           error instanceof Error &&
           (error.name === "AbortError" || error.message === "Aborted")
         ) {
+          console.log("API Request was aborted");
           return {
             success: false,
             error: {
@@ -123,7 +138,9 @@ export class ApiClient {
 
         // If not the last attempt, wait and retry
         if (attempt < maxRetries) {
-          await this.delay(Math.pow(2, attempt - 1) * 1000); // Exponential backoff
+          const delay = Math.pow(2, attempt - 1) * 1000;
+          console.log(`API Retrying in ${delay}ms...`);
+          await this.delay(delay); // Exponential backoff
           continue;
         }
 
