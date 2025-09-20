@@ -234,15 +234,28 @@ class TutorialGenerationService:
         step_number: int,
     ) -> Image.Image:
         """Generate completion image for a step using previous image and description."""
+        # まずは日本語のstep_title, step_descriptionをgeminiで英語に変換する
+        prompt = f"""Translate the following Japanese text to English:
+```
+ステップ {step_number}: {step_title}
+指示: {step_description}
+```
+
+Please include only the English translation result, and do not include anything unnecessary.
+"""
+        response = self.ai_client.generate_content(
+            model="gemini-2.5-flash",
+            prompt=prompt,
+        )
+        translated_text = response.text
+
         try:
-            prompt = f"""Generate completed face image with these changes to the provided face image.
-Step {step_number}: {step_title}
-Instructions: {step_description}"""
+            image_prompt = f"""Generate completed face image with these changes to the provided face image.\n{translated_text}"""
 
             # Use image generation service with previous image
             response = self.ai_client.generate_content(
                 model="gemini-2.5-flash-image-preview",
-                prompt=prompt,
+                prompt=image_prompt,
                 image=previous_image,
             )
 

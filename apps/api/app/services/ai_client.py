@@ -42,6 +42,8 @@ class AIClient:
         "gemini-2.5-flash-image-preview",
         "gemini-2.0-flash-lite",
         "veo-3.0-generate-001",
+        "veo-3.0-fast-generate-001",
+        "veo-2.0-generate-001",
     ]
 
     def __init__(self, api_key: Optional[str] = None):
@@ -213,7 +215,6 @@ class AIClient:
                 },
                 **kwargs,
             )
-            print("\n\nPASS\n\n: response", response)
 
             # If response has parsed attribute, use it
             if hasattr(response, "parsed"):
