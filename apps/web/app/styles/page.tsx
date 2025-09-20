@@ -194,14 +194,13 @@ export default function StyleSelectionPage() {
 
         toast.success("チュートリアルの生成を開始しました");
 
-        // Navigate to generating page with styleId and customization
-        const params = new URLSearchParams({
-          styleId: selectedStyle.id,
-          ...(customizationText && { customization: customizationText }),
-        });
-        const navigateUrl = `/generating?${params.toString()}`;
-        console.log("handleConfirmSelection: Navigating to:", navigateUrl);
-        router.push(navigateUrl);
+        // Navigate directly to tutorial page with the generated tutorial ID
+        const tutorialId = response.data.id;
+        console.log(
+          "handleConfirmSelection: Navigating to tutorial:",
+          tutorialId,
+        );
+        router.push(`/tutorial?id=${tutorialId}`);
       } else {
         console.error(
           "handleConfirmSelection: API request failed:",

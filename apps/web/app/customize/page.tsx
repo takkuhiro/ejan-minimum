@@ -130,10 +130,14 @@ export default function CustomizePage() {
   };
 
   const handleConfirm = () => {
-    // Navigate to loading page
-    if (typeof window !== "undefined") {
-      window.location.href = "/generating";
-    }
+    // Since customization page is currently not actively used,
+    // we'll keep this function empty for now
+    // TODO: Implement proper tutorial generation flow if this page is reactivated
+    toast({
+      title: "この機能は現在利用できません",
+      description: "スタイル選択ページからお試しください",
+      variant: "destructive",
+    });
   };
 
   const handleStartFromScratch = () => {

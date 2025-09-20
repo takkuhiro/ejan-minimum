@@ -334,10 +334,10 @@ describe("StyleSelectionPage - API Integration", () => {
         });
       });
 
-      // Should navigate to generating page
+      // Should navigate to tutorial page
       await waitFor(() => {
         expect(mockRouter.push).toHaveBeenCalledWith(
-          expect.stringContaining("/generating"),
+          expect.stringContaining("/tutorial?id="),
         );
       });
     });
