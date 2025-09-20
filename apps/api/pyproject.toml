@@ -1,0 +1,29 @@
+[project]
+name = "api"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.116.2",
+    "google-cloud-storage>=3.4.0",
+    "google-genai>=1.38.0",
+    "pillow>=11.3.0",
+    "pydantic>=2.11.9",
+    "pydantic-settings>=2.10.1",
+    "python-dotenv>=1.1.1",
+    "uvicorn>=0.35.0",
+]
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+    "httpx>=0.28.1",
+    "mypy>=1.18.1",
+    "pytest-cov>=7.0.0",
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
+    "pytest-mock>=3.15.1",
+    "ruff>=0.13.0",
+    "types-requests>=2.32.4.20250913",
+]

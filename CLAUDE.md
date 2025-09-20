@@ -17,6 +17,7 @@ Kiro-style Spec Driven Development implementation using claude code slash comman
 ### Active Specifications
 - Check `.kiro/specs/` for active specifications
 - Use `/kiro:spec-status [feature-name]` to check progress
+- **ejan-minimum**: Minimum viable implementation of EJAN platform
 
 ## Development Guidelines
 - Think in English, but generate responses in Japanese (思考は英語、回答の生成は日本語で行うように)
@@ -51,6 +52,7 @@ Note: Optional for new features or small additions. You can proceed directly to 
 
 ### Current Steering Files
 Managed by `/kiro:steering` command. Updates here reflect command changes.
+Last updated: 2025-09-17 - Updated with recent AI service implementations
 
 ### Active Steering Files
 - `product.md`: Always included - Product context and business objectives
@@ -127,7 +129,7 @@ Managed by `/kiro:steering` command. Updates here reflect command changes.
 - **アプリケーション構造**: `apps/{web,api}` (frontendやbackendではない)
 - **Python環境**: uvを使用（pip/venvではなく）
 - **データ管理**: 検証環境のため、画像・動画データは削除せずCloud Storageに保存
-- **サービスアカウント**: 開発環境では単一のサービスアカウント`ejan-dev-sa`を使用
+- **サービスアカウント**: 開発環境では単一のサービスアカウント`ejan-minimum-dev-sa`を使用
   - Google Cloud リソース（Storage, SQL）とFirebase認証の両方に使用
   - 本番環境では用途別に分離予定
 

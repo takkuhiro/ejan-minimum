@@ -63,11 +63,23 @@
 ### Completed Components
 - **Frontend Mock**: apps/web with all screens using mock data
 - **Sample AI Integrations**: Working examples for Nano Banana and Veo3
+- **Backend API Structure**: FastAPI application with core setup
+- **Storage Service**: Google Cloud Storage integration
+- **Data Models**: Request/response schemas defined
+- **AI Client Service**: Gemini integration for image/video generation
+- **Image Generation Service**: Nano Banana implementation
+- **Tutorial Structure Service**: Step-by-step tutorial generation
+- **Testing Framework**: Unit and integration test structure with full coverage
+- **Infrastructure Modules**: Terraform for storage and IAM
+- **API Endpoints**: Styles endpoint (/api/styles) and Tutorial endpoints (/api/tutorials) (Tasks 5.1-5.3)
+- **Frontend API Client**: HTTP client with error handling in lib/api/ (Task 6.1)
+- **Photo Upload UI**: Interactive photo upload component with drag-and-drop (Task 6.2)
+- **Style Selection UI**: Style grid with selection and customization features (Task 6.3)
 
 ### In Progress
-- **Backend API**: FastAPI setup pending
-- **Cloud Functions**: AI model integration pending
-- **Infrastructure**: Terraform configuration pending
+- **Cloud Functions**: Deploying AI models as serverless functions
+- **Cloud Run Deployment**: Container deployment setup
+- **Full Frontend-Backend Integration**: Completing API integration for all screens
 
 ## Business Model (Future)
 

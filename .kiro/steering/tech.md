@@ -10,9 +10,10 @@
 
 ### Infrastructure Platform
 - **Cloud Provider**: Google Cloud Platform (GCP)
-- **Infrastructure as Code**: Terraform
-- **Container Runtime**: Cloud Run
-- **Function Runtime**: Cloud Functions (Python)
+- **Infrastructure as Code**: Terraform (implemented)
+- **Container Runtime**: Cloud Run (planned)
+- **Function Runtime**: Cloud Functions (planned)
+- **State Management**: GCS backend for Terraform (optional)
 
 ## Frontend
 
@@ -44,6 +45,21 @@
 }
 ```
 
+### Frontend API Client (Implemented)
+- **Location**: `apps/web/lib/api/`
+- **Features**:
+  - Type-safe API client with TypeScript interfaces
+  - Centralized error handling with error-handler.ts
+  - Automatic retry logic for failed requests
+  - Support for file uploads and JSON responses
+  - Environment-based API URL configuration
+- **Methods**:
+  - `generateStyles()`: Upload photo and generate styles
+  - `getStyles()`: Retrieve available styles
+  - `getStyleDetails()`: Get specific style information
+  - `generateTutorial()`: Create tutorial for selected style
+  - `getTutorialStatus()`: Poll tutorial generation status
+
 ## Backend
 
 ### Core Technologies
@@ -52,14 +68,34 @@
 - **ASGI Server**: Uvicorn
 - **Package Manager**: uv (not pip/venv)
 
+### API Endpoints (Implemented)
+- **POST /api/styles/generate**: Generate style recommendations from uploaded photo
+- **GET /api/styles**: Retrieve available styles
+- **GET /api/styles/{style_id}**: Get specific style details
+- **POST /api/tutorials/generate**: Generate tutorial for selected style
+- **GET /api/tutorials/{tutorial_id}**: Get tutorial details with steps
+- **GET /api/tutorials/{tutorial_id}/status**: Check generation status
+
 ### Backend Libraries
 ```python
-# Current dependencies
-google-genai  # Gemini API client
-pillow        # Image processing
-python-dotenv # Environment management
-fastapi       # Web framework (planned)
-uvicorn       # ASGI server (planned)
+# Current dependencies (from pyproject.toml)
+fastapi>=0.116.2        # Web framework (implemented)
+uvicorn>=0.35.0         # ASGI server (implemented)
+pydantic>=2.11.9        # Data validation
+pydantic-settings>=2.10.1  # Settings management
+python-dotenv>=1.1.1    # Environment management
+google-cloud-storage>=3.4.0  # GCS client
+google-generativeai     # Gemini AI client (implemented in services)
+
+# Development dependencies
+black>=25.1.0           # Code formatter
+ruff>=0.13.0            # Linter
+mypy>=1.18.1            # Type checker
+pytest>=8.4.2           # Testing framework
+pytest-asyncio>=1.2.0   # Async testing
+pytest-cov>=7.0.0       # Test coverage
+pytest-mock>=3.15.1     # Mocking support
+httpx>=0.28.1           # HTTP client for testing
 ```
 
 ## AI Models
@@ -126,6 +162,7 @@ uv run pytest      # Run tests
 
 ### Infrastructure
 ```bash
+cd terraform/environments/dev
 terraform init     # Initialize Terraform
 terraform plan     # Preview changes
 terraform apply    # Apply infrastructure
