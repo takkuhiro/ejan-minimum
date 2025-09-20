@@ -25,6 +25,7 @@ from app.services.tutorial_structure import TutorialStructureService
 from app.services.image_generation import ImageGenerationService
 from app.services.cloud_function_client import CloudFunctionClient
 from app.core.config import settings
+from app.api.prompts import TUTORIAL_STEP_IMAGE_GENERATION_PROMPT, TUTORIAL_STEP_VIDEO_GENERATION_PROMPT
 
 
 logger = logging.getLogger(__name__)
@@ -97,8 +98,8 @@ class TutorialGenerationService:
                 # Generate completion image for this step
                 completion_image = await self._generate_step_completion_image(
                     previous_image=previous_image,
-                    step_title=step_data.title,
-                    step_description=step_data.description,
+                    step_title_en=step_data.title_en,
+                    step_description_en=step_data.description_en,
                     step_number=step_number,
                 )
 
@@ -115,10 +116,12 @@ class TutorialGenerationService:
 
                 # Start video generation (async, will complete in background)
                 # Use the previous step's image URL (or original for step 1)
+
+                instruction_text = TUTORIAL_STEP_VIDEO_GENERATION_PROMPT.replace("$TITLE_EN", step_data.title_en).replace("$DESCRIPTION_EN", step_data.description_en)
                 asyncio.create_task(
                     self._generate_step_video_async(
                         image_url=previous_image_url,
-                        instruction_text=step_data.description,
+                        instruction_text=instruction_text,
                         target_gcs_path=video_gcs_path,
                         step_number=step_number,
                         tutorial_id=tutorial_id,
@@ -229,29 +232,13 @@ class TutorialGenerationService:
     async def _generate_step_completion_image(
         self,
         previous_image: Image.Image,
-        step_title: str,
-        step_description: str,
+        step_title_en: str,
+        step_description_en: str,
         step_number: int,
     ) -> Image.Image:
         """Generate completion image for a step using previous image and description."""
-        # まずは日本語のstep_title, step_descriptionをgeminiで英語に変換する
-        prompt = f"""Translate the following Japanese text to English:
-```
-ステップ {step_number}: {step_title}
-指示: {step_description}
-```
-
-Please include only the English translation result, and do not include anything unnecessary.
-"""
-        response = self.ai_client.generate_content(
-            model="gemini-2.5-flash",
-            prompt=prompt,
-        )
-        translated_text = response.text
-
         try:
-            image_prompt = f"""Generate completed face image with these changes to the provided face image.\n{translated_text}"""
-
+            image_prompt = TUTORIAL_STEP_IMAGE_GENERATION_PROMPT.replace("$STEP_TITLE_EN", step_title_en).replace("$STEP_DESCRIPTION_EN", step_description_en)
             # Use image generation service with previous image
             response = self.ai_client.generate_content(
                 model="gemini-2.5-flash-image-preview",

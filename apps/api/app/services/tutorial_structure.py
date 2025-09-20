@@ -4,6 +4,7 @@ from typing import Dict, List, Any, Optional
 from pydantic import BaseModel, Field, field_validator
 
 from app.services.ai_client import AIClient, AIClientAPIError
+from app.api.prompts import GENERATE_TUTORIAL_STRUCTURE_PROMPT
 
 
 class TutorialStructureError(Exception):
@@ -25,6 +26,8 @@ class MakeupStep(BaseModel):
     step_number: int = Field(..., ge=1, description="Step number in sequence")
     title: str = Field(..., min_length=1, description="Title of the step")
     description: str = Field(..., description="Detailed description of the step")
+    title_en: str = Field(..., description="Title of the step in English")
+    description_en: str = Field(..., description="Detailed description of the step in Japanese")
     duration_seconds: int = Field(default=30, ge=10, description="Duration in seconds")
     tools_needed: List[str] = Field(
         default_factory=list, description="List of tools needed"
@@ -68,31 +71,23 @@ def generate_tutorial_prompt(
     Returns:
         Generated prompt string.
     """
-    base_prompt = f"""Create a detailed step-by-step makeup and hairstyling tutorial for achieving the following style:
-{style_description}
+    base_prompt = GENERATE_TUTORIAL_STRUCTURE_PROMPT.replace("$STYLE_DESCRIPTION", style_description)
 
-Provide a complete tutorial with:
-1. Clear title and description
-2. Step-by-step instructions with specific techniques
-3. Time estimate for each step
-4. Required tools and products
-5. Overall difficulty level (beginner, intermediate, or advanced)
-
-Make the Japanese instructions clear and easy to follow for someone learning this style."""
-
+    complement = ""
     if gender:
         gender_text = {
-            "male": "for men",
-            "female": "for women",
+            "male": "男性",
+            "female": "女性",
             "neutral": "as gender-neutral",
         }.get(gender.lower(), "")
         if gender_text:
-            base_prompt += f"\n\nTailor the tutorial {gender_text}."
-
+            complement += f"# 性別\n{gender_text}\n\n"
     if custom_request:
-        base_prompt += f"\n\nAdditional requirements: {custom_request}"
+        complement += f"# 追加要件\n{custom_request}\n\n"
 
-    return base_prompt
+    prompt = base_prompt.replace("$COMPLEMENT", complement)
+
+    return prompt
 
 
 class TutorialStructureService:
@@ -106,7 +101,7 @@ class TutorialStructureService:
         """
         self.ai_client = ai_client
         self.model_name = (
-            "gemini-2.0-flash-exp"  # または gemini-1.5-flash など利用可能なモデル
+            "gemini-2.5-flash"
         )
 
     async def generate_tutorial_structure(
