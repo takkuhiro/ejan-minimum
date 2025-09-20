@@ -84,6 +84,69 @@ async def generate_tutorial(request: TutorialGenerationRequest) -> TutorialRespo
 
 
 @router.get(
+    "/{tutorial_id}",
+    response_model=TutorialResponse,
+    responses={
+        404: {"model": ErrorResponse, "description": "Tutorial not found"},
+        500: {"model": ErrorResponse, "description": "Failed to retrieve tutorial"},
+    },
+)
+async def get_tutorial(tutorial_id: str) -> TutorialResponse:
+    """
+    Get a tutorial by ID.
+
+    This endpoint retrieves the complete tutorial data with all steps,
+    images, and videos for a previously generated tutorial.
+
+    Args:
+        tutorial_id: ID of the tutorial to retrieve
+
+    Returns:
+        TutorialResponse: Complete tutorial data with all steps
+
+    Raises:
+        HTTPException: If tutorial not found or retrieval fails
+    """
+    try:
+        # Initialize service
+        service = TutorialGenerationService()
+
+        # Get tutorial
+        tutorial = await service.get_tutorial(tutorial_id)
+
+        return tutorial
+
+    except ValueError as e:
+        if "not found" in str(e).lower():
+            logger.error(f"Tutorial not found: {tutorial_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "error": "tutorial_not_found",
+                    "message": f"Tutorial {tutorial_id} not found",
+                },
+            )
+        else:
+            logger.error(f"Tutorial retrieval failed: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail={
+                    "error": "tutorial_retrieval_failed",
+                    "message": str(e),
+                },
+            )
+    except Exception as e:
+        logger.error(f"Tutorial retrieval failed: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": "tutorial_retrieval_failed",
+                "message": f"Failed to retrieve tutorial: {str(e)}",
+            },
+        )
+
+
+@router.get(
     "/{tutorial_id}/status",
     response_model=TutorialStatusResponse,
     responses={

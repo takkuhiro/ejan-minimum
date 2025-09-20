@@ -31,6 +31,9 @@ export function truncateTitle(title: string, maxLength: number = 10): string {
  * @param description 説明文
  * @param maxLength 最大文字数（デフォルト: 30）
  */
-export function truncateDescription(description: string, maxLength: number = 30): string {
+export function truncateDescription(
+  description: string,
+  maxLength: number = 30,
+): string {
   return truncateText(description, maxLength);
 }

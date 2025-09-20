@@ -26,7 +26,9 @@ export interface GenerateStylesResponse {
 
 // Tutorial generation request
 export interface GenerateTutorialRequest {
-  styleId: string;
+  rawDescription: string;
+  originalImageUrl: string;
+  styleId?: string; // Optional for backward compatibility
   customization?: string;
 }
 

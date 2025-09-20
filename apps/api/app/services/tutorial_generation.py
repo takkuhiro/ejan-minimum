@@ -87,6 +87,7 @@ class TutorialGenerationService:
             steps = []
             previous_image = original_image
             previous_image_url = original_image_url
+            bucket = self.storage_service.storage_client.get_bucket()
 
             for i, step_data in enumerate(structured_tutorial.steps):
                 step_number = i + 1
@@ -120,6 +121,23 @@ class TutorialGenerationService:
                         step_number=step_number,
                         tutorial_id=tutorial_id,
                     )
+                )
+
+                # Save step metadata
+                step_metadata = {
+                    "step_number": step_number,
+                    "title": step_data.title,
+                    "description": step_data.description,
+                    "tools": step_data.tools_needed,
+                    "created_at": datetime.now().isoformat(),
+                }
+                step_metadata_path = (
+                    f"tutorials/{tutorial_id}/step_{step_number}/metadata.json"
+                )
+                step_metadata_blob = bucket.blob(step_metadata_path)
+                step_metadata_blob.upload_from_string(
+                    json.dumps(step_metadata, ensure_ascii=False),
+                    content_type="application/json",
                 )
 
                 # Create tutorial step
@@ -302,6 +320,94 @@ Apply these changes to the provided image to show the completed result of this s
             logger.info(f"Tutorial metadata saved for {tutorial_id}")
         except Exception as e:
             logger.error(f"Failed to save tutorial metadata: {str(e)}")
+
+    async def get_tutorial(self, tutorial_id: str) -> TutorialResponse:
+        """
+        Get a tutorial by ID.
+
+        Retrieves the complete tutorial data from Cloud Storage.
+
+        Args:
+            tutorial_id: ID of the tutorial to retrieve
+
+        Returns:
+            TutorialResponse with all steps and metadata
+
+        Raises:
+            ValueError: If tutorial not found or retrieval fails
+        """
+        try:
+            # Load tutorial metadata
+            bucket = self.storage_service.storage_client.get_bucket()
+            metadata_blob = bucket.blob(f"tutorials/{tutorial_id}/metadata.json")
+
+            if not metadata_blob.exists():
+                raise ValueError(f"Tutorial {tutorial_id} not found")
+
+            metadata_json = metadata_blob.download_as_text()
+            metadata = json.loads(metadata_json)
+
+            # Retrieve steps data
+            total_steps = metadata.get("total_steps", 0)
+            steps = []
+
+            for step_num in range(1, total_steps + 1):
+                # Construct step data from stored resources
+                image_path = f"tutorials/{tutorial_id}/step_{step_num}/image.jpg"
+                video_path = f"tutorials/{tutorial_id}/step_{step_num}/video.mp4"
+
+                # Get public URLs
+                image_url = f"https://storage.googleapis.com/{settings.storage_bucket}/{image_path}"
+                video_url = f"https://storage.googleapis.com/{settings.storage_bucket}/{video_path}"
+
+                # Try to load step metadata if available
+                step_metadata_path = (
+                    f"tutorials/{tutorial_id}/step_{step_num}/metadata.json"
+                )
+                step_metadata_blob = bucket.blob(step_metadata_path)
+
+                if step_metadata_blob.exists():
+                    step_metadata_json = step_metadata_blob.download_as_text()
+                    step_data = json.loads(step_metadata_json)
+
+                    step = TutorialStep(
+                        step_number=step_num,
+                        title=step_data.get("title", f"Step {step_num}"),
+                        description=step_data.get("description", ""),
+                        image_url=image_url,
+                        video_url=video_url,
+                        tools=step_data.get("tools", []),
+                    )
+                else:
+                    # Fallback: create basic step data
+                    step = TutorialStep(
+                        step_number=step_num,
+                        title=f"Step {step_num}",
+                        description="",
+                        image_url=image_url,
+                        video_url=video_url,
+                        tools=[],
+                    )
+
+                steps.append(step)
+
+            # Create response
+            tutorial = TutorialResponse(
+                id=tutorial_id,
+                title=metadata.get("title", "Tutorial"),
+                description=metadata.get("description", ""),
+                total_steps=total_steps,
+                steps=steps,
+            )
+
+            logger.info(f"Tutorial {tutorial_id} retrieved successfully")
+            return tutorial
+
+        except ValueError as e:
+            raise e
+        except Exception as e:
+            logger.error(f"Failed to retrieve tutorial: {str(e)}")
+            raise ValueError(f"Failed to retrieve tutorial: {str(e)}")
 
     async def check_tutorial_status(self, tutorial_id: str) -> TutorialStatusResponse:
         """Check the status of a tutorial generation."""

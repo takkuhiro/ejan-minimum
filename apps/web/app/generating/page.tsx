@@ -95,12 +95,84 @@ export default function GeneratingPage() {
   );
 
   const generateTutorial = useCallback(async () => {
-    if (!styleId) {
-      console.error("generateTutorial: styleId is missing");
+    // First, check if tutorial data already exists in localStorage
+    const existingTutorial = localStorage.getItem("currentTutorial");
+    if (existingTutorial) {
+      try {
+        const tutorialData = JSON.parse(existingTutorial);
+        console.log(
+          "generateTutorial: Found existing tutorial data:",
+          tutorialData,
+        );
+
+        // Clear the stored data to prevent reuse
+        localStorage.removeItem("currentTutorial");
+
+        // If tutorial is complete, redirect immediately
+        if (
+          tutorialData.id &&
+          tutorialData.steps &&
+          tutorialData.steps.length > 0
+        ) {
+          console.log("generateTutorial: Using existing tutorial, redirecting");
+          setTutorialId(tutorialData.id);
+          setIsGenerating(true);
+
+          // Start progress animation for visual feedback
+          startProgressAnimation();
+
+          // Redirect after a short delay for UI feedback
+          setTimeout(() => {
+            handleTutorialComplete(tutorialData.id);
+          }, 1500);
+          return;
+        }
+      } catch (error) {
+        console.error(
+          "generateTutorial: Error parsing existing tutorial:",
+          error,
+        );
+        localStorage.removeItem("currentTutorial");
+      }
+    }
+
+    // If no existing tutorial, we need to generate a new one
+    // Get required data from localStorage
+    const selectedStyle = localStorage.getItem("selectedStyle");
+    const originalImageUrl = localStorage.getItem("originalImageUrl");
+
+    if (!selectedStyle || !originalImageUrl) {
+      console.warn("generateTutorial: Missing required data in localStorage");
+      setError(
+        "必要なデータが見つかりません。スタイル選択からやり直してください。",
+      );
+      // Redirect to home after delay
+      setTimeout(() => {
+        router.push("/");
+      }, 3000);
       return;
     }
 
-    console.log("generateTutorial: Starting with styleId:", styleId, "customization:", customization);
+    let styleData;
+    try {
+      styleData = JSON.parse(selectedStyle);
+    } catch (error) {
+      console.error("generateTutorial: Error parsing style data:", error);
+      setError("スタイルデータが破損しています");
+      return;
+    }
+
+    // Prepare the request with all required fields
+    const rawDescription = customization
+      ? `${styleData.rawDescription || styleData.description} カスタマイズ要望: ${customization}`
+      : styleData.rawDescription || styleData.description;
+
+    console.log("generateTutorial: Starting with complete data:", {
+      rawDescription,
+      originalImageUrl,
+      styleId,
+      customization,
+    });
     setIsGenerating(true);
     setError(null);
 
@@ -111,17 +183,20 @@ export default function GeneratingPage() {
       // Start progress animation
       startProgressAnimation();
 
-      // Log API request details
-      console.log("generateTutorial: Calling API with request:", {
-        styleId,
+      const request = {
+        rawDescription,
+        originalImageUrl,
+        styleId: styleId || styleData.id,
         customization,
-      });
+      };
+
+      // Log API request details
+      console.log("generateTutorial: Calling API with request:", request);
 
       // Call generate tutorial API
-      const response = await apiClient.generateTutorial(
-        { styleId, customization },
-        { signal: abortControllerRef.current.signal },
-      );
+      const response = await apiClient.generateTutorial(request, {
+        signal: abortControllerRef.current.signal,
+      });
 
       console.log("generateTutorial: API response:", response);
 
@@ -135,22 +210,29 @@ export default function GeneratingPage() {
       console.log("generateTutorial: Tutorial data:", data);
       setTutorialId(data.id);
 
+      // Save the new tutorial data
+      localStorage.setItem("currentTutorial", JSON.stringify(data));
+
       // Since backend returns completed tutorial data directly,
       // we can redirect to the tutorial page immediately
       if (data.id && data.steps && data.steps.length > 0) {
-        console.log("generateTutorial: Tutorial is ready, redirecting to tutorial page");
+        console.log(
+          "generateTutorial: Tutorial is ready, redirecting to tutorial page",
+        );
         // Tutorial is ready, redirect immediately
         handleTutorialComplete(data.id);
       } else {
         // If for some reason the tutorial is not complete,
         // we can start polling (though this shouldn't happen with current backend)
-        console.log("generateTutorial: Tutorial needs polling, starting polling");
+        console.log(
+          "generateTutorial: Tutorial needs polling, starting polling",
+        );
         startPolling(data.id);
       }
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") {
-        console.log("generateTutorial: Request was aborted");
-        // Request was aborted, ignore
+        console.log("generateTutorial: Request was aborted (likely due to React StrictMode)");
+        // Request was aborted, ignore silently
         return;
       }
       console.error("generateTutorial: Unexpected error:", err);
@@ -161,7 +243,7 @@ export default function GeneratingPage() {
       });
       setError("エラーが発生しました");
     }
-  }, [styleId, customization, handleTutorialComplete, startPolling]);
+  }, [styleId, customization, handleTutorialComplete, startPolling, router]);
 
   useEffect(() => {
     // Check if styleId exists
@@ -172,9 +254,11 @@ export default function GeneratingPage() {
 
     // Prevent double execution in development
     let isMounted = true;
+    let hasStarted = false;
 
     const startGeneration = async () => {
-      if (!isMounted) return;
+      if (!isMounted || hasStarted) return;
+      hasStarted = true;
       await generateTutorial();
     };
 
@@ -186,7 +270,9 @@ export default function GeneratingPage() {
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
       }
-      if (abortControllerRef.current) {
+      // Only abort if actually generating (not just from React StrictMode cleanup)
+      if (abortControllerRef.current && isGenerating) {
+        console.log("Aborting generation due to unmount");
         abortControllerRef.current.abort();
       }
     };
@@ -243,7 +329,9 @@ export default function GeneratingPage() {
         console.log("handleError: Ignoring abort error");
         return;
       }
-      setError(`エラーが発生しました: ${error.message || error.error || "不明なエラー"}`);
+      setError(
+        `エラーが発生しました: ${error.message || error.error || "不明なエラー"}`,
+      );
       toast.error(error.message || "予期せぬエラーが発生しました。");
     }
   };

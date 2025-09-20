@@ -9,9 +9,11 @@ import os
 import time
 import uuid
 import requests
-from typing import Dict, Any
+import random
+from typing import Dict, Any, Optional
 from google import genai
 from google.genai import types
+from google.genai.errors import ClientError
 from google.cloud import storage
 from dotenv import load_dotenv
 
@@ -63,12 +65,19 @@ def generate_video(request) -> Dict[str, Any]:
         image_bytes = response.content
         image = types.Image(imageBytes=image_bytes, mimeType="image/jpeg")
 
-        # Veo3による動画生成開始
-        operation = genai_client.models.generate_videos(
-            model="veo-3.0-generate-001",
+        # Veo3による動画生成開始（リトライロジック付き）
+        operation = generate_video_with_retry(
+            genai_client,
             prompt=prompt,
             image=image,
+            step_number=step_number
         )
+
+        if not operation:
+            return {
+                "status": "failed",
+                "error": "Failed to generate video after multiple retries due to rate limit"
+            }
 
         # ポーリングによる生成完了待機（最大540秒）
         timeout_seconds = 540
@@ -129,6 +138,66 @@ def generate_video(request) -> Dict[str, Any]:
             "error": str(e),
             "duration": duration
         }
+
+
+def generate_video_with_retry(
+    client: genai.Client,
+    prompt: str,
+    image: types.Image,
+    step_number: int = 1,
+    max_retries: int = 5
+) -> Optional[Any]:
+    """
+    指数バックオフによるリトライを行いながらVeo3で動画生成
+
+    Args:
+        client: Google AI クライアント
+        prompt: 動画生成用のプロンプト
+        image: 入力画像
+        step_number: ステップ番号（ログ出力用）
+        max_retries: 最大リトライ回数
+
+    Returns:
+        生成操作オブジェクト、失敗時はNone
+    """
+    for attempt in range(max_retries):
+        try:
+            # 動画生成を試行
+            operation = client.models.generate_videos(
+                model="veo-3.0-generate-001",
+                prompt=prompt,
+                image=image,
+            )
+            return operation
+
+        except ClientError as e:
+            # Rate limitエラー（429）の場合のみリトライ
+            if e.status_code == 429:
+                if attempt < max_retries - 1:
+                    # 指数バックオフの計算
+                    # 基本待機時間: 10秒, 20秒, 40秒, 80秒, 160秒（最大約2.7分）
+                    # ジッターを追加して同時リトライを防ぐ
+                    base_wait = min(10 * (2 ** attempt), 300)  # 最大5分
+                    jitter = random.uniform(0, base_wait * 0.1)  # 最大10%のジッター
+                    wait_time = base_wait + jitter
+
+                    print(f"Step {step_number}: Rate limit hit. Retry {attempt + 1}/{max_retries} "
+                          f"after {wait_time:.1f} seconds")
+                    time.sleep(wait_time)
+                else:
+                    # 最後のリトライも失敗
+                    print(f"Step {step_number}: Failed after {max_retries} retries due to rate limit")
+                    return None
+            else:
+                # Rate limit以外のエラーはリトライしない
+                print(f"Step {step_number}: Non-retryable error: {e}")
+                raise
+        except Exception as e:
+            # その他の予期しないエラーもリトライしない
+            print(f"Step {step_number}: Unexpected error: {e}")
+            raise
+
+    return None
 
 
 def generate_unique_filename(prefix: str, extension: str) -> str:

@@ -85,6 +85,75 @@ def sample_tutorial_response() -> TutorialResponse:
     )
 
 
+class TestGetTutorialEndpoint:
+    """Test get tutorial endpoint."""
+
+    def test_get_tutorial_success(
+        self,
+        client: TestClient,
+        mock_tutorial_service: MagicMock,
+        sample_tutorial_response: TutorialResponse,
+    ):
+        """Test successful tutorial retrieval."""
+        # Setup mock
+        mock_tutorial_service.get_tutorial = AsyncMock(
+            return_value=sample_tutorial_response
+        )
+
+        # Make request
+        response = client.get("/api/tutorials/tutorial_456")
+
+        # Verify response
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["id"] == "tutorial_456"
+        assert data["title"] == "Natural Glam Makeup Tutorial"
+        assert len(data["steps"]) == 3
+
+        # Verify mock was called correctly
+        mock_tutorial_service.get_tutorial.assert_called_once_with("tutorial_456")
+
+    def test_get_tutorial_not_found(
+        self,
+        client: TestClient,
+        mock_tutorial_service: MagicMock,
+    ):
+        """Test tutorial not found."""
+        # Setup mock
+        mock_tutorial_service.get_tutorial = AsyncMock(
+            side_effect=ValueError("Tutorial tutorial_999 not found")
+        )
+
+        # Make request
+        response = client.get("/api/tutorials/tutorial_999")
+
+        # Verify response
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        data = response.json()
+        assert data["detail"]["error"] == "tutorial_not_found"
+        assert "tutorial_999" in data["detail"]["message"]
+
+    def test_get_tutorial_server_error(
+        self,
+        client: TestClient,
+        mock_tutorial_service: MagicMock,
+    ):
+        """Test server error during tutorial retrieval."""
+        # Setup mock
+        mock_tutorial_service.get_tutorial = AsyncMock(
+            side_effect=Exception("Storage connection failed")
+        )
+
+        # Make request
+        response = client.get("/api/tutorials/tutorial_456")
+
+        # Verify response
+        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+        data = response.json()
+        assert data["detail"]["error"] == "tutorial_retrieval_failed"
+        assert "Storage connection failed" in data["detail"]["message"]
+
+
 class TestTutorialGenerationEndpoint:
     """Test tutorial generation endpoint."""
 

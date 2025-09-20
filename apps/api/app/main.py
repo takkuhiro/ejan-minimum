@@ -72,10 +72,13 @@ async def http_exception_handler(
     request: Request, exc: StarletteHTTPException
 ) -> JSONResponse:
     """Handle HTTP exceptions with consistent format."""
+    # Keep detail as-is if it's a dict, otherwise convert to string
+    detail = exc.detail if isinstance(exc.detail, (dict, list)) else str(exc.detail)
+
     return JSONResponse(
         status_code=exc.status_code,
         content={
-            "detail": str(exc.detail),
+            "detail": detail,
             "status_code": exc.status_code,
             "type": "http_error",
         },

@@ -52,7 +52,7 @@ export class ApiClient {
       headers["X-API-Key"] = this.apiKey;
     }
 
-    console.log(`API Request: ${fetchOptions.method || 'GET'} ${url}`);
+    console.log(`API Request: ${fetchOptions.method || "GET"} ${url}`);
     if (fetchOptions.body) {
       console.log("Request body:", fetchOptions.body);
     }
@@ -76,7 +76,9 @@ export class ApiClient {
           fetchOptions.signal.addEventListener("abort", abortHandler);
         }
 
-        console.log(`API Request attempt ${attempt}/${maxRetries} - Timeout: ${timeout}ms`);
+        console.log(
+          `API Request attempt ${attempt}/${maxRetries} - Timeout: ${timeout}ms`,
+        );
 
         const response = await Promise.race([
           fetch(url, {
@@ -107,7 +109,10 @@ export class ApiClient {
           data: data as T,
         };
       } catch (error) {
-        console.error(`API Request error (attempt ${attempt}/${maxRetries}):`, error);
+        console.error(
+          `API Request error (attempt ${attempt}/${maxRetries}):`,
+          error,
+        );
 
         // Check if timeout
         if (error instanceof Error && error.message === "TimeoutError") {

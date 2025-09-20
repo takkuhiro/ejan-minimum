@@ -124,15 +124,37 @@ export default function StyleSelectionPage() {
       return;
     }
 
-    console.log("handleConfirmSelection: Starting with style:", selectedStyle.id);
-    console.log("handleConfirmSelection: Customization text:", customizationText);
+    if (!originalImageUrl) {
+      console.error("handleConfirmSelection: No original image URL");
+      toast.error("元画像が見つかりません");
+      return;
+    }
+
+    console.log(
+      "handleConfirmSelection: Starting with style:",
+      selectedStyle.id,
+    );
+    console.log(
+      "handleConfirmSelection: Customization text:",
+      customizationText,
+    );
 
     setIsGenerating(true);
     const loadingToast = toast.loading("チュートリアルを生成中...");
 
+    let rawDescription = selectedStyle.description ?? "";
+    if (rawDescription === "") {
+      rawDescription = `${selectedStyle.title}のスタイル。${selectedStyle.description} カスタマイズ要望: ${customizationText}`;
+    }
+    if (customizationText) {
+      rawDescription = `${selectedStyle.title}のスタイル。${selectedStyle.description} カスタマイズ要望: ${customizationText}`;
+    }
+
     try {
       const request = {
-        styleId: selectedStyle.id,
+        rawDescription: rawDescription,
+        originalImageUrl: originalImageUrl,
+        styleId: selectedStyle.id, // Optional field for backward compatibility
         ...(customizationText && { customization: customizationText }),
       };
 
@@ -151,11 +173,24 @@ export default function StyleSelectionPage() {
       toast.dismiss(loadingToast);
 
       if (response.success) {
-        console.log("handleConfirmSelection: Success, tutorial data:", response.data);
+        console.log(
+          "handleConfirmSelection: Success, tutorial data:",
+          response.data,
+        );
 
-        // Save tutorial data to localStorage
+        // Save tutorial data and related information to localStorage
         localStorage.setItem("currentTutorial", JSON.stringify(response.data));
         localStorage.setItem("selectedStyleId", selectedStyle.id);
+        localStorage.setItem(
+          "selectedStyle",
+          JSON.stringify({
+            ...selectedStyle,
+            rawDescription: rawDescription, // Save the raw description for potential retry
+          }),
+        );
+        if (originalImageUrl) {
+          localStorage.setItem("originalImageUrl", originalImageUrl);
+        }
 
         toast.success("チュートリアルの生成を開始しました");
 
@@ -168,7 +203,10 @@ export default function StyleSelectionPage() {
         console.log("handleConfirmSelection: Navigating to:", navigateUrl);
         router.push(navigateUrl);
       } else {
-        console.error("handleConfirmSelection: API request failed:", response.error);
+        console.error(
+          "handleConfirmSelection: API request failed:",
+          response.error,
+        );
         const error = response.error;
         let errorMessage = "チュートリアルの生成に失敗しました";
 
@@ -179,11 +217,17 @@ export default function StyleSelectionPage() {
           console.error("handleConfirmSelection: Timeout error");
           errorMessage = "処理がタイムアウトしました。もう一度お試しください";
         } else if (isServerError(error)) {
-          console.error("handleConfirmSelection: Server error, status:", error.statusCode);
+          console.error(
+            "handleConfirmSelection: Server error, status:",
+            error.statusCode,
+          );
           errorMessage =
             "サーバーエラーが発生しました。しばらく待ってから再試行してください";
         } else if (error.message) {
-          console.error("handleConfirmSelection: Error message:", error.message);
+          console.error(
+            "handleConfirmSelection: Error message:",
+            error.message,
+          );
           errorMessage = error.message;
         }
 
@@ -276,7 +320,10 @@ export default function StyleSelectionPage() {
                     fill
                     className="object-cover"
                     onError={(e) => {
-                      console.error("Failed to load original image:", originalImageUrl);
+                      console.error(
+                        "Failed to load original image:",
+                        originalImageUrl,
+                      );
                       console.error("Error event:", e);
                       setOriginalImageUrl(null);
                     }}
@@ -332,7 +379,9 @@ export default function StyleSelectionPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <CardTitle className="text-lg mb-2">{truncateTitle(style.title, 12)}</CardTitle>
+                  <CardTitle className="text-lg mb-2">
+                    {truncateTitle(style.title, 12)}
+                  </CardTitle>
                   <p className="text-sm text-muted-foreground mb-3">
                     {truncateDescription(style.description, 35)}
                   </p>

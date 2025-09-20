@@ -146,7 +146,7 @@ async def test_styles_api_full_flow(
         # Service now returns tuple of (styles, original_image_url)
         mock_service.generate_styles.return_value = (
             mock_styles,
-            "https://storage.googleapis.com/bucket/original.jpg"
+            "https://storage.googleapis.com/bucket/original.jpg",
         )
 
         async with AsyncClient(

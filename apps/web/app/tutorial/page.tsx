@@ -296,7 +296,7 @@ export default function TutorialPage() {
               <CardContent className="space-y-2">
                 {tutorial.steps.map((step, index) => (
                   <button
-                    key={step.stepNumber}
+                    key={`step-${step.stepNumber}-${index}`}
                     onClick={() => handleStepSelect(index)}
                     className={`w-full text-left p-3 rounded-lg transition-all ${
                       index === currentStep

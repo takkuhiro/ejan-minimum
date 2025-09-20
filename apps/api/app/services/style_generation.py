@@ -49,14 +49,14 @@ class StyleGenerationService:
 
             # Upload to storage with correct content type
             original_image_url = self.storage_service.upload_image(
-                data=img_bytes,
-                content_type="image/jpeg"
+                data=img_bytes, content_type="image/jpeg"
             )
             print(f"Successfully uploaded original image to: {original_image_url}")
         except Exception as e:
             # Log error but continue with style generation
             print(f"Failed to upload original image: {e}")
             import traceback
+
             traceback.print_exc()
 
         # Generate styles using the image generation service
