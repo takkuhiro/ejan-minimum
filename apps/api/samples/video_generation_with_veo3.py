@@ -33,7 +33,9 @@ def generate_video_with_retry(max_retries=5):
         try:
             print(f"Attempt {attempt + 1}/{max_retries}: Generating video...")
             operation = client.models.generate_videos(
-                model="veo-3.0-generate-001",
+                # model="veo-3.0-generate-001",
+                model="veo-3.0-fast-generate-001",
+                # model="veo-2.0-generate-001",
                 prompt=prompt,
                 image=image,
             )

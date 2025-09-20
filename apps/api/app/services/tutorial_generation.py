@@ -28,6 +28,7 @@ from app.core.config import settings
 
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 class TutorialGenerationService:
@@ -107,9 +108,10 @@ class TutorialGenerationService:
                     completion_image, image_gcs_path
                 )
 
-                # Prepare video path
+                # Prepare video path (video will be generated later)
                 video_gcs_path = f"tutorials/{tutorial_id}/step_{step_number}/video.mp4"
-                video_public_url = f"https://storage.googleapis.com/{settings.storage_bucket}/{video_gcs_path}"
+                # Don't set video URL yet, as it doesn't exist
+                video_public_url = None
 
                 # Start video generation (async, will complete in background)
                 # Use the previous step's image URL (or original for step 1)
@@ -233,10 +235,9 @@ class TutorialGenerationService:
     ) -> Image.Image:
         """Generate completion image for a step using previous image and description."""
         try:
-            prompt = f"""Create the next step in this makeup tutorial.
+            prompt = f"""Generate completed face image with these changes to the provided face image.
 Step {step_number}: {step_title}
-Instructions: {step_description}
-Apply these changes to the provided image to show the completed result of this step."""
+Instructions: {step_description}"""
 
             # Use image generation service with previous image
             response = self.ai_client.generate_content(
@@ -356,9 +357,18 @@ Apply these changes to the provided image to show the completed result of this s
                 image_path = f"tutorials/{tutorial_id}/step_{step_num}/image.jpg"
                 video_path = f"tutorials/{tutorial_id}/step_{step_num}/video.mp4"
 
-                # Get public URLs
-                image_url = f"https://storage.googleapis.com/{settings.storage_bucket}/{image_path}"
-                video_url = f"https://storage.googleapis.com/{settings.storage_bucket}/{video_path}"
+                # Check if files exist and get public URLs
+                image_blob = bucket.blob(image_path)
+                video_blob = bucket.blob(video_path)
+
+                image_url = None
+                video_url = None
+
+                if image_blob.exists():
+                    image_url = f"https://storage.googleapis.com/{settings.storage_bucket}/{image_path}"
+
+                if video_blob.exists():
+                    video_url = f"https://storage.googleapis.com/{settings.storage_bucket}/{video_path}"
 
                 # Try to load step metadata if available
                 step_metadata_path = (

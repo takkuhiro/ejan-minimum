@@ -121,12 +121,12 @@ class TutorialStep(BaseModel):
         ...,
         description="Detailed description of the step",
     )
-    image_url: str = Field(
-        ...,
+    image_url: Optional[str] = Field(
+        None,
         description="URL to the step completion image",
     )
-    video_url: str = Field(
-        ...,
+    video_url: Optional[str] = Field(
+        None,
         description="URL to the step instruction video",
     )
     tools: List[str] = Field(
@@ -136,8 +136,10 @@ class TutorialStep(BaseModel):
 
     @field_validator("image_url", "video_url")
     @classmethod
-    def validate_urls(cls, v: str) -> str:
-        """Validate that URLs are valid."""
+    def validate_urls(cls, v: Optional[str]) -> Optional[str]:
+        """Validate that URLs are valid if provided."""
+        if v is None:
+            return v
         if not (v.startswith("http://") or v.startswith("https://")):
             raise ValueError("Invalid URL format")
         return v

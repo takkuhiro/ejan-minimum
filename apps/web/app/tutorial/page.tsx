@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +26,7 @@ import { toast } from "sonner";
 export default function TutorialPage() {
   const searchParams = useSearchParams();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const [tutorial, setTutorial] = useState<TutorialResponse | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
@@ -33,9 +34,76 @@ export default function TutorialPage() {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [videoStatuses, setVideoStatuses] = useState<
+    Record<number, "pending" | "processing" | "completed" | "failed">
+  >({});
 
   // Get tutorial ID from URL
   const tutorialId = searchParams.get("id");
+
+  // Polling for video status updates
+  const pollVideoStatus = useCallback(
+    async (id: string) => {
+      try {
+        const response = await apiClient.getTutorialStatus(id);
+
+        if (!response.success) {
+          console.error("Failed to get tutorial status:", response.error);
+          return;
+        }
+
+        const statusData = response.data;
+
+        // Update video statuses for each step
+        const newVideoStatuses: Record<
+          number,
+          "pending" | "processing" | "completed" | "failed"
+        > = {};
+        let allCompleted = true;
+
+        statusData.steps.forEach((step) => {
+          newVideoStatuses[step.stepNumber] = step.status;
+          if (step.status !== "completed") {
+            allCompleted = false;
+          }
+
+          // Update tutorial with new video URL if available
+          if (step.videoUrl && tutorial) {
+            const stepIndex = step.stepNumber - 1;
+            if (
+              tutorial.steps[stepIndex] &&
+              !tutorial.steps[stepIndex].videoUrl
+            ) {
+              setTutorial((prev) => {
+                if (!prev) return prev;
+                const updatedSteps = [...prev.steps];
+                updatedSteps[stepIndex] = {
+                  ...updatedSteps[stepIndex],
+                  videoUrl: step.videoUrl,
+                };
+                return {
+                  ...prev,
+                  steps: updatedSteps,
+                };
+              });
+            }
+          }
+        });
+
+        setVideoStatuses(newVideoStatuses);
+
+        // Stop polling if all videos are completed
+        if (allCompleted && pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current);
+          pollingIntervalRef.current = null;
+          console.log("All videos generated, stopping polling");
+        }
+      } catch (error) {
+        console.error("Error polling video status:", error);
+      }
+    },
+    [tutorial],
+  );
 
   useEffect(() => {
     if (!tutorialId) {
@@ -46,6 +114,34 @@ export default function TutorialPage() {
 
     loadTutorial(tutorialId);
   }, [tutorialId]);
+
+  // Start polling when tutorial is loaded
+  useEffect(() => {
+    if (tutorial && tutorialId) {
+      // Check if any videos are not yet generated
+      const hasIncompleteVideos = tutorial.steps.some((step) => !step.videoUrl);
+
+      if (hasIncompleteVideos && !pollingIntervalRef.current) {
+        // Initial check
+        pollVideoStatus(tutorialId);
+
+        // Start polling every 3 seconds
+        pollingIntervalRef.current = setInterval(() => {
+          pollVideoStatus(tutorialId);
+        }, 3000);
+
+        console.log("Started video status polling");
+      }
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+    };
+  }, [tutorial, tutorialId, pollVideoStatus]);
 
   // Handle video state changes
   useEffect(() => {
@@ -387,9 +483,21 @@ export default function TutorialPage() {
                       </>
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-muted">
-                        <p className="text-muted-foreground">
-                          動画を読み込み中...
-                        </p>
+                        <div className="text-center">
+                          <div className="animate-pulse mb-2">
+                            <Clock className="w-8 h-8 text-muted-foreground mx-auto" />
+                          </div>
+                          <p className="text-muted-foreground">
+                            {videoStatuses[currentStep + 1] === "completed"
+                              ? "動画を読み込み中..."
+                              : videoStatuses[currentStep + 1] === "failed"
+                                ? "動画生成に失敗しました"
+                                : videoStatuses[currentStep + 1] ===
+                                    "processing"
+                                  ? "動画を生成中..."
+                                  : "動画を準備中..."}
+                          </p>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -407,13 +515,16 @@ export default function TutorialPage() {
                         height={600}
                         className="w-full h-auto"
                         priority
+                        onError={() => {
+                          console.error(
+                            `Failed to load image: ${currentStepData.imageUrl}`,
+                          );
+                        }}
                       />
                     </div>
                   ) : (
                     <div className="w-full max-w-md mx-auto aspect-[4/3] bg-muted rounded-lg flex items-center justify-center">
-                      <p className="text-muted-foreground">
-                        画像を読み込み中...
-                      </p>
+                      <p className="text-muted-foreground">画像を準備中...</p>
                     </div>
                   )}
                 </div>

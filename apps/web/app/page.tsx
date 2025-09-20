@@ -10,7 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Upload, Sparkles, Users, Palette } from "lucide-react";
 import { PhotoUpload } from "@/components/photo-upload";
@@ -257,26 +256,35 @@ export default function WelcomePage() {
           <CardContent className="space-y-8">
             {/* Gender Selection */}
             <div className="space-y-4">
-              <Label className="text-lg font-semibold">
+              <Label className="text-lg font-semibold text-center block">
                 性別を選択してください
               </Label>
-              <RadioGroup
-                value={selectedGender}
-                onValueChange={setSelectedGender}
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="male" id="male" />
-                  <Label htmlFor="male">男性</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="female" id="female" />
-                  <Label htmlFor="female">女性</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="neutral" id="neutral" />
-                  <Label htmlFor="neutral">中性的</Label>
-                </div>
-              </RadioGroup>
+              <div className="grid grid-cols-3 gap-4">
+                <Button
+                  type="button"
+                  variant={selectedGender === "male" ? "default" : "outline"}
+                  className="h-20 text-lg font-medium transition-all hover:scale-105 rounded-xl"
+                  onClick={() => setSelectedGender("male")}
+                >
+                  男性
+                </Button>
+                <Button
+                  type="button"
+                  variant={selectedGender === "female" ? "default" : "outline"}
+                  className="h-20 text-lg font-medium transition-all hover:scale-105 rounded-xl"
+                  onClick={() => setSelectedGender("female")}
+                >
+                  女性
+                </Button>
+                <Button
+                  type="button"
+                  variant={selectedGender === "neutral" ? "default" : "outline"}
+                  className="h-20 text-lg font-medium transition-all hover:scale-105 rounded-xl"
+                  onClick={() => setSelectedGender("neutral")}
+                >
+                  中性的
+                </Button>
+              </div>
             </div>
 
             {/* Photo Upload */}

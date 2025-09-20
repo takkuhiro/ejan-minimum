@@ -95,6 +95,17 @@ export default function GeneratingPage() {
   );
 
   const generateTutorial = useCallback(async () => {
+    // Check if we're already generating
+    if (
+      abortControllerRef.current &&
+      !abortControllerRef.current.signal.aborted
+    ) {
+      console.log(
+        "generateTutorial: Already generating, skipping duplicate request",
+      );
+      return;
+    }
+
     // First, check if tutorial data already exists in localStorage
     const existingTutorial = localStorage.getItem("currentTutorial");
     if (existingTutorial) {
@@ -231,7 +242,9 @@ export default function GeneratingPage() {
       }
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") {
-        console.log("generateTutorial: Request was aborted (likely due to React StrictMode)");
+        console.log(
+          "generateTutorial: Request was aborted (likely due to React StrictMode)",
+        );
         // Request was aborted, ignore silently
         return;
       }
@@ -252,6 +265,10 @@ export default function GeneratingPage() {
       return;
     }
 
+    // Create a new AbortController for this effect
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     // Prevent double execution in development
     let isMounted = true;
     let hasStarted = false;
@@ -259,7 +276,11 @@ export default function GeneratingPage() {
     const startGeneration = async () => {
       if (!isMounted || hasStarted) return;
       hasStarted = true;
-      await generateTutorial();
+
+      // Only proceed if not aborted
+      if (!controller.signal.aborted) {
+        await generateTutorial();
+      }
     };
 
     startGeneration();
@@ -270,12 +291,11 @@ export default function GeneratingPage() {
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
       }
-      // Only abort if actually generating (not just from React StrictMode cleanup)
-      if (abortControllerRef.current && isGenerating) {
-        console.log("Aborting generation due to unmount");
-        abortControllerRef.current.abort();
-      }
+      // Always abort when effect is cleaned up (React StrictMode or unmount)
+      controller.abort("Component unmounting or effect re-running");
+      console.log("Aborting generation due to cleanup");
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [styleId]); // Remove generateTutorial from dependencies to prevent re-execution
 
   const startProgressAnimation = () => {
@@ -314,6 +334,12 @@ export default function GeneratingPage() {
     console.error("handleError: Processing error:", error);
     setIsGenerating(false);
 
+    // Don't show abort errors to the user
+    if (error.error === "AbortError" || error.message?.includes("abort")) {
+      console.log("handleError: Ignoring abort error");
+      return;
+    }
+
     if (error.error === "TimeoutError") {
       console.error("handleError: Timeout error detected");
       setError("処理に時間がかかっています");
@@ -322,13 +348,24 @@ export default function GeneratingPage() {
       console.error("handleError: Server error detected");
       setError("チュートリアルの生成に失敗しました");
       toast.error("サーバーエラーが発生しました。");
-    } else {
-      console.error("handleError: Other error:", error.error, error.message);
-      // Don't show abort errors to the user
-      if (error.error === "AbortError") {
-        console.log("handleError: Ignoring abort error");
+    } else if (
+      "detail" in error &&
+      typeof error.detail === "object" &&
+      error.detail &&
+      "error" in error.detail &&
+      error.detail.error === "tutorial_generation_failed"
+    ) {
+      const detail = error.detail as { error: string; message?: string };
+      console.error("handleError: Tutorial generation failed:", detail.message);
+      // Check if it's a duplicate request error (from React StrictMode)
+      if (detail.message?.includes("Failed to download image")) {
+        console.log("handleError: Likely a duplicate request, ignoring");
         return;
       }
+      setError("チュートリアルの生成に失敗しました");
+      toast.error("生成処理に失敗しました。もう一度お試しください。");
+    } else {
+      console.error("handleError: Other error:", error.error, error.message);
       setError(
         `エラーが発生しました: ${error.message || error.error || "不明なエラー"}`,
       );
@@ -425,7 +462,6 @@ export default function GeneratingPage() {
                 const Icon = step.icon;
                 const isActive = index === currentStep && isGenerating;
                 const isCompleted = index < currentStep;
-                const _isUpcoming = index > currentStep;
 
                 return (
                   <div

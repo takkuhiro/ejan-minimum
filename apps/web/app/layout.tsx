@@ -19,6 +19,10 @@ export const metadata: Metadata = {
   description:
     "AI-powered makeup and hairstyle recommendations tailored just for you",
   generator: "v0.app",
+  icons: {
+    icon: "/logo.jpeg",
+    apple: "/logo.jpeg",
+  },
 };
 
 export default function RootLayout({

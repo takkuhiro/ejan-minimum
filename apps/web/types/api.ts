@@ -38,8 +38,8 @@ export interface TutorialStep {
   title: string;
   description: string;
   detailedInstructions?: string;
-  imageUrl: string;
-  videoUrl: string;
+  imageUrl?: string;
+  videoUrl?: string;
   tools: string[];
   tips?: string[];
 }
@@ -86,6 +86,23 @@ export interface ApiError {
   message: string;
   statusCode?: number;
   details?: Record<string, any>;
+}
+
+// Tutorial status response
+export interface TutorialStatusStep {
+  stepNumber: number;
+  status: "pending" | "processing" | "completed" | "failed";
+  videoUrl?: string;
+  errorMessage?: string;
+}
+
+export interface TutorialStatusResponse {
+  tutorialId: string;
+  status: string;
+  progress?: number;
+  steps: TutorialStatusStep[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // API Response wrapper

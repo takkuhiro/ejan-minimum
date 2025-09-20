@@ -4,6 +4,7 @@ import {
   GenerateTutorialRequest,
   GenerateTutorialResponse,
   TutorialResponse,
+  TutorialStatusResponse,
   StyleDetailResponse,
   ApiError,
   ApiResponse,
@@ -258,8 +259,8 @@ export class ApiClient {
   async getTutorialStatus(
     tutorialId: string,
     options?: RequestOptions,
-  ): Promise<ApiResponse<{ status: string; progress?: number }>> {
-    return this.request<{ status: string; progress?: number }>(
+  ): Promise<ApiResponse<TutorialStatusResponse>> {
+    return this.request<TutorialStatusResponse>(
       `/api/tutorials/${tutorialId}/status`,
       {
         method: "GET",
