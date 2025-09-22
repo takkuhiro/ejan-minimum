@@ -3,10 +3,14 @@
 // Gender type for style generation
 export type Gender = "male" | "female" | "neutral";
 
+// Application scope type for style generation
+export type ApplicationScope = "hair" | "makeup" | "both";
+
 // Style generation request
 export interface GenerateStylesRequest {
   photo: string; // Base64 encoded image
   gender: Gender;
+  applicationScope: ApplicationScope;
 }
 
 // Style response

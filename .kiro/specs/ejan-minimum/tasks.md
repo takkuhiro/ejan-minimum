@@ -53,7 +53,7 @@ npm run test                   # テスト実行 → すべてPASSED、FAILED=0
 - **環境変数**: `.env`ファイルに以下を設定
   ```env
   GOOGLE_API_KEY=<Gemini/Nano Banana/Veo3用のAPIキー>
-  GOOGLE_CLOUD_PROJECT=<GCPプロジェクトID>
+  PROJECT_ID=<GCPプロジェクトID>
   STORAGE_BUCKET=<Cloud Storageバケット名>
   ```
 
@@ -524,7 +524,7 @@ terraform/
   - **本番環境変数例**:
     ```
     GOOGLE_API_KEY=実際のAPIキー
-    GOOGLE_CLOUD_PROJECT=ejan-demo-project
+    PROJECT_ID=ejan-demo-project
     STORAGE_BUCKET=ejan-demo-storage  # Terraformのoutputから取得
     FUNCTION_URL=<Terraformのoutputから取得>
     ```

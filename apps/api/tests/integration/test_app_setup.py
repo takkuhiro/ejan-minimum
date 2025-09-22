@@ -21,7 +21,7 @@ def test_env() -> Generator[None, None, None]:
 
     # Set test environment variables
     os.environ["GOOGLE_API_KEY"] = "test-api-key"
-    os.environ["GOOGLE_CLOUD_PROJECT"] = "test-project"
+    os.environ["PROJECT_ID"] = "test-project"
     os.environ["STORAGE_BUCKET"] = "test-bucket"
     os.environ["ENV"] = "test"
 

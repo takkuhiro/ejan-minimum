@@ -9,11 +9,15 @@ from fastapi import APIRouter, HTTPException, status
 from app.models.request import (
     GenerateStylesRequest,
     Gender as RequestGender,
+    ApplicationScope as RequestApplicationScope,
     CustomizeStyleRequest,
 )
 from app.models.response import GenerateStylesResponse, GeneratedStyle
 from app.services.style_generation import StyleGenerationService
-from app.services.image_generation import Gender as ServiceGender
+from app.services.image_generation import (
+    Gender as ServiceGender,
+    ApplicationScope as ServiceApplicationScope,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/styles", tags=["styles"])
@@ -89,10 +93,21 @@ async def generate_styles(request: GenerateStylesRequest) -> GenerateStylesRespo
         }
         service_gender = gender_map[request.gender]
 
+        # Convert ApplicationScope enum from request to service
+        scope_map = {
+            RequestApplicationScope.HAIR: ServiceApplicationScope.HAIR,
+            RequestApplicationScope.MAKEUP: ServiceApplicationScope.MAKEUP,
+            RequestApplicationScope.BOTH: ServiceApplicationScope.BOTH,
+        }
+        service_scope = scope_map[request.application_scope]
+
         # Generate styles using the service
         service = StyleGenerationService()
         styles, original_image_url = await service.generate_styles(
-            photo_bytes=photo_bytes, gender=service_gender, count=3
+            photo_bytes=photo_bytes,
+            gender=service_gender,
+            application_scope=service_scope,
+            count=3,
         )
 
         # Store styles for later retrieval

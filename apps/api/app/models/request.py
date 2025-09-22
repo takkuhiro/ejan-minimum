@@ -21,6 +21,14 @@ class Gender(str, Enum):
     NEUTRAL = "neutral"
 
 
+class ApplicationScope(str, Enum):
+    """Application scope options for style generation."""
+
+    HAIR = "hair"
+    MAKEUP = "makeup"
+    BOTH = "both"
+
+
 class PhotoUploadRequest(BaseModel):
     """Request model for photo upload and style generation."""
 
@@ -39,6 +47,11 @@ class PhotoUploadRequest(BaseModel):
     gender: Gender = Field(
         ...,
         description="Gender selection for style generation",
+    )
+    application_scope: ApplicationScope = Field(
+        ...,
+        description="Application scope for style generation (hair, makeup, or both)",
+        alias="applicationScope",  # Accept camelCase from frontend
     )
 
     @field_validator("photo")

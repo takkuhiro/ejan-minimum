@@ -50,96 +50,60 @@ def generate_video(request) -> Dict[str, Any]:
         step_number = request_data.get("step_number", 1)
         target_gcs_path = request_data.get("target_gcs_path")
 
-        # # Google API クライアントの初期化
-        # api_key = os.getenv("GOOGLE_API_KEY")
-        # if not api_key:
-        #     return {"status": "failed", "error": "GOOGLE_API_KEY not configured"}
+        # Google API クライアントの初期化
+        api_key = os.getenv("GOOGLE_API_KEY")
+        if not api_key:
+            return {"status": "failed", "error": "GOOGLE_API_KEY not configured"}
 
-        # genai_client = genai.Client(api_key=api_key)
+        genai_client = genai.Client(api_key=api_key)
 
-        # # 画像データの取得
-        # response = requests.get(image_url)
-        # if response.status_code != 200:
-        #     return {"status": "failed", "error": f"Failed to fetch image from {image_url}"}
+        # 画像データの取得
+        response = requests.get(image_url)
+        if response.status_code != 200:
+            return {"status": "failed", "error": f"Failed to fetch image from {image_url}"}
 
-        # image_bytes = response.content
-        # image = types.Image(imageBytes=image_bytes, mimeType="image/jpeg")
+        image_bytes = response.content
+        image = types.Image(imageBytes=image_bytes, mimeType="image/jpeg")
 
-        # # Veo3による動画生成開始（リトライロジック付き）
-        # operation = generate_video_with_retry(
-        #     genai_client,
-        #     prompt=prompt,
-        #     image=image,
-        #     step_number=step_number
-        # )
+        # Veo3による動画生成開始（リトライロジック付き）
+        operation = generate_video_with_retry(
+            genai_client,
+            prompt=prompt,
+            image=image,
+            step_number=step_number
+        )
 
-        # if not operation:
-        #     return {
-        #         "status": "failed",
-        #         "error": "Failed to generate video after multiple retries due to rate limit"
-        #     }
+        if not operation:
+            return {
+                "status": "failed",
+                "error": "Failed to generate video after multiple retries due to rate limit"
+            }
 
-        # # ポーリングによる生成完了待機（最大540秒）
-        # timeout_seconds = 540
-        # while not operation.done:
-        #     elapsed = time.time() - start_time
-        #     if elapsed > timeout_seconds:
-        #         return {"status": "failed", "error": "Video generation timeout after 540 seconds"}
+        # ポーリングによる生成完了待機（最大540秒）
+        timeout_seconds = 540
+        while not operation.done:
+            elapsed = time.time() - start_time
+            if elapsed > timeout_seconds:
+                return {"status": "failed", "error": "Video generation timeout after 540 seconds"}
 
-        #     time.sleep(10)
-        #     operation = genai_client.operations.get(operation)
+            time.sleep(10)
+            operation = genai_client.operations.get(operation)
 
-        # # 動画データの取得
-        # video = operation.response.generated_videos[0]
-        # video_data = genai_client.files.download(file=video.video)
+        # 動画データの取得
+        video = operation.response.generated_videos[0]
+        video_data = genai_client.files.download(file=video.video)
 
-        # # Cloud Storageに保存
-        # bucket_name = os.getenv("STORAGE_BUCKET")
-        # if not bucket_name:
-        #     return {"status": "failed", "error": "STORAGE_BUCKET not configured"}
+        # Cloud Storageに保存
+        bucket_name = os.getenv("STORAGE_BUCKET")
+        if not bucket_name:
+            return {"status": "failed", "error": "STORAGE_BUCKET not configured"}
 
-        # storage_client = storage.Client()
-        # bucket = storage_client.bucket(bucket_name)
-
-        # # ファイルパスを決定
-        # if target_gcs_path:
-        #     # 指定されたパスを使用（bucketプレフィックスを除去）
-        #     if target_gcs_path.startswith(f"gs://{bucket_name}/"):
-        #         blob_path = target_gcs_path[len(f"gs://{bucket_name}/"):]
-        #     elif target_gcs_path.startswith(f"{bucket_name}/"):
-        #         blob_path = target_gcs_path[len(f"{bucket_name}/"):]
-        #     else:
-        #         blob_path = target_gcs_path
-        # else:
-        #     # デフォルトのパスを使用
-        #     filename = generate_unique_filename(f"video-step-{step_number}", "mp4")
-        #     blob_path = f"videos/{filename}"
-
-        # blob = bucket.blob(blob_path)
-
-        # # 動画データをアップロード
-        # blob.upload_from_string(video_data, content_type="video/mp4")
-
-        # # 公開URLの生成
-        # video_url = blob.public_url
-
-        # duration = int(time.time() - start_time)
-
-        # *******************************************************
-        # DUMMY PROCESS
-        time.sleep(10)
-
-        # ダミー動画のソースURL
-        source_video_url = "https://storage.googleapis.com/ejan-minimum-storage-dev/tutorials/tutorial_31fb741a/step_1/video.mp4"
-
-        # Cloud Storage設定
-        bucket_name = os.getenv("STORAGE_BUCKET", "ejan-minimum-storage-dev")
         storage_client = storage.Client()
         bucket = storage_client.bucket(bucket_name)
 
-        # target_gcs_pathが指定されていればそのパスを使用
+        # ファイルパスを決定
         if target_gcs_path:
-            # バケット名のプレフィックスを除去
+            # 指定されたパスを使用（bucketプレフィックスを除去）
             if target_gcs_path.startswith(f"gs://{bucket_name}/"):
                 blob_path = target_gcs_path[len(f"gs://{bucket_name}/"):]
             elif target_gcs_path.startswith(f"{bucket_name}/"):
@@ -151,21 +115,15 @@ def generate_video(request) -> Dict[str, Any]:
             filename = generate_unique_filename(f"video-step-{step_number}", "mp4")
             blob_path = f"videos/{filename}"
 
-        # ソース動画をダウンロード
-        response = requests.get(source_video_url)
-        if response.status_code == 200:
-            # target_gcs_pathに動画をコピー
-            blob = bucket.blob(blob_path)
-            blob.upload_from_string(response.content, content_type="video/mp4")
+        blob = bucket.blob(blob_path)
 
-            # アップロードした動画のURLを返す
-            video_url = f"https://storage.googleapis.com/{bucket_name}/{blob_path}"
-        else:
-            # フォールバック: ソース動画のURLをそのまま返す
-            video_url = source_video_url
+        # 動画データをアップロード
+        blob.upload_from_string(video_data, content_type="video/mp4")
 
-        duration = 10
-        # *******************************************************
+        # 公開URLの生成
+        video_url = blob.public_url
+
+        duration = int(time.time() - start_time)
 
         return {
             "status": "success",

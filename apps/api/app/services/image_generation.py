@@ -31,6 +31,14 @@ class Gender(str, Enum):
     NEUTRAL = "neutral"
 
 
+class ApplicationScope(str, Enum):
+    """Application scope options for style generation."""
+
+    HAIR = "hair"
+    MAKEUP = "makeup"
+    BOTH = "both"
+
+
 class ImageGenerationError(Exception):
     """Exception raised during image generation."""
 
@@ -60,20 +68,24 @@ class JapaneseStyleInfo(BaseModel):
 
 
 def generate_style_prompt(
-    gender: Gender, style_index: int, custom_text: Optional[str] = None
+    gender: Gender,
+    style_index: int,
+    application_scope: ApplicationScope,
+    custom_text: Optional[str] = None,
 ) -> str:
     """Generate prompt for style creation.
 
     Args:
         gender: Gender for style generation.
         style_index: Index of style variation (0-2).
+        application_scope: Application scope (hair, makeup, or both).
         custom_text: Optional custom request text.
 
     Returns:
         Generated prompt string.
     """
-    # Ensure style_index is within bounds
-    key = f"{gender.value}{style_index}"
+    # Generate key with application scope
+    key = f"{gender.value}{style_index}_{application_scope.value}"
     style_variation = STYLE_VARIATIONS[key]
 
     # Gender-specific language
@@ -113,6 +125,7 @@ class ImageGenerationService:
         image: Image.Image,
         gender: Gender,
         style_index: int,
+        application_scope: ApplicationScope,
         custom_text: Optional[str] = None,
     ) -> StyleGeneration:
         """Generate a single style for the given image.
@@ -121,6 +134,7 @@ class ImageGenerationService:
             image: Input face PIL Image.
             gender: Gender for style generation.
             style_index: Index of style variation (0-2).
+            application_scope: Application scope (hair, makeup, or both).
             custom_text: Optional custom request text.
 
         Returns:
@@ -136,7 +150,7 @@ class ImageGenerationService:
         while retry_count < max_retries:
             try:
                 # Generate prompt
-                prompt = generate_style_prompt(gender, style_index, custom_text)
+                prompt = generate_style_prompt(gender, style_index, application_scope, custom_text)
 
                 # Call AI API
                 response = self.ai_client.generate_content(
@@ -241,13 +255,18 @@ class ImageGenerationService:
         raise ImageGenerationError("Failed to generate style after all retries")
 
     async def generate_three_styles(
-        self, image: Image.Image, gender: Gender, custom_text: Optional[str] = None
+        self,
+        image: Image.Image,
+        gender: Gender,
+        application_scope: ApplicationScope,
+        custom_text: Optional[str] = None,
     ) -> List[StyleGeneration]:
         """Generate three different styles for the given image.
 
         Args:
             image: Input face PIL Image.
             gender: Gender for style generation.
+            application_scope: Application scope (hair, makeup, or both).
             custom_text: Optional custom request text.
 
         Returns:
@@ -262,7 +281,11 @@ class ImageGenerationService:
         for i in range(3):
             try:
                 style = await self.generate_single_style(
-                    image=image, gender=gender, style_index=i, custom_text=custom_text
+                    image=image,
+                    gender=gender,
+                    style_index=i,
+                    application_scope=application_scope,
+                    custom_text=custom_text,
                 )
                 styles.append(style)
             except ImageGenerationError as e:
@@ -284,13 +307,18 @@ class ImageGenerationService:
         raise ImageGenerationError(error_msg)
 
     async def process_upload_and_generate(
-        self, base64_photo: str, gender: Gender, custom_text: Optional[str] = None
+        self,
+        base64_photo: str,
+        gender: Gender,
+        application_scope: Optional[ApplicationScope] = None,
+        custom_text: Optional[str] = None,
     ) -> List[StyleGeneration]:
         """Process uploaded photo and generate styles.
 
         Args:
             base64_photo: Base64 encoded photo.
             gender: Gender for style generation.
+            application_scope: Optional application scope (defaults to BOTH).
             custom_text: Optional custom request text.
 
         Returns:
@@ -315,8 +343,12 @@ class ImageGenerationService:
         except Exception as e:
             raise ImageGenerationError(f"Failed to open image: {e}")
 
+        # Use default application scope if not provided
+        if application_scope is None:
+            application_scope = ApplicationScope.BOTH
+
         # Generate styles
-        return await self.generate_three_styles(image, gender, custom_text)
+        return await self.generate_three_styles(image, gender, application_scope, custom_text)
 
     def validate_image_size(self, image_data: bytes, max_size_mb: int = 10) -> bool:
         """Validate image size is within limit.

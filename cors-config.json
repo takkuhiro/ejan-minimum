@@ -1,8 +1,0 @@
-[
-  {
-    "origin": ["http://localhost:3000", "http://localhost:8000", "https://*.vercel.app"],
-    "method": ["GET", "HEAD"],
-    "responseHeader": ["Content-Type"],
-    "maxAgeSeconds": 3600
-  }
-]

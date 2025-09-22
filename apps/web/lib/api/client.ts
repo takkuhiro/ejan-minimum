@@ -54,11 +54,6 @@ export class ApiClient {
       headers["X-API-Key"] = this.apiKey;
     }
 
-    console.log(`API Request: ${fetchOptions.method || "GET"} ${url}`);
-    if (fetchOptions.body) {
-      console.log("Request body:", fetchOptions.body);
-    }
-
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         const controller = new AbortController();

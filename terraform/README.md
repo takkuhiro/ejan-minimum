@@ -123,7 +123,7 @@ terraform output -raw service_account_key | base64 -d > service-account-key.json
 ```bash
 cd environments/dev
 echo "STORAGE_BUCKET=$(terraform output -raw storage_bucket_name)" >> ../../../apps/api/.env
-echo "GOOGLE_CLOUD_PROJECT=$(terraform output -raw project_id)" >> ../../../apps/api/.env
+echo "PROJECT_ID=$(terraform output -raw project_id)" >> ../../../apps/api/.env
 ```
 
 ## クリーンアップ

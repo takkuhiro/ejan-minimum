@@ -41,8 +41,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Verify required settings
     if not settings.google_api_key:
         logger.warning("GOOGLE_API_KEY not configured")
-    if not settings.google_cloud_project:
-        logger.warning("GOOGLE_CLOUD_PROJECT not configured")
+    if not settings.project_id:
+        logger.warning("PROJECT_ID not configured")
     if not settings.storage_bucket:
         logger.warning("STORAGE_BUCKET not configured")
 

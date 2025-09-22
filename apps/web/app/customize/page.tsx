@@ -239,12 +239,12 @@ export default function CustomizePage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="relative w-full h-[500px] mb-4">
+                  <div className="relative w-full h-[500px] mb-4 bg-muted/10 rounded-lg">
                     <Image
                       src={currentStyle.imageUrl || "/placeholder.svg"}
                       alt={currentStyle.title}
                       fill
-                      className="object-cover rounded-lg"
+                      className="object-contain rounded-lg"
                     />
                   </div>
                   <p className="text-muted-foreground mb-4">
