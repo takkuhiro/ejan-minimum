@@ -2,10 +2,10 @@
 # > class JapaneseStyleInfo(BaseModel):
 # >     """Model for Japanese style information."""
 # >     title: str = Field(description="日本語のタイトル（10文字以内）")
-# >     description: str = Field(description="日本語の説明文（30文字以内）")
+# >     description: str = Field(description="日本語の説明文（50文字以内）")
 # $RAW_DESCRIPTIONはNano Bananaで生成した英語のスタイル説明です。
 STYLE_INFO_GENERATION_PROMPT = """\
-以下の英語のスタイル説明を日本語に翻訳し、魅力的なタイトル（10文字以内）と説明文（30文字以内）を生成してください。
+以下の英語のスタイル説明を日本語に翻訳し、魅力的なタイトル（10文字以内）と説明文（50文字以内）を生成してください。
 タイトルはキャッチーで覚えやすいものにしてください。
 説明文は簡潔でわかりやすくしてください。
 
@@ -15,39 +15,39 @@ $RAW_DESCRIPTION
 
 STYLE_VARIATIONS = {
     # Male styles with hair only
-    "male0_hair": "Fresh and Natural Style Hair: A neat, short haircut in a natural color. The front is kept down slightly to create a light, effortless feel. Use minimal wax to maintain the hair's natural flow. Keep the current facial features and makeup unchanged.",
-    "male1_hair": "Sophisticated and Conservative Style Hair: Dark, short hair with a sleek side part or slicked-back style. A glossy finish adds a polished, intelligent impression. Keep the current facial features and makeup unchanged.",
-    "male2_hair": "Soft and Casual Style Hair: A light mushroom cut or a slightly longer wolf cut. Ash or beige hair colors will soften the overall look. Keep the current facial features and makeup unchanged.",
+    "male0_hair": "Textured and Dynamic Style Hair: Hair styled with matte-finish wax to create natural movement and dimension. Leave a few strands of hair falling over the forehead for a refined, effortless look. The hair has a subtle sheen without being shiny or greasy, achieving an elegant finish. Keep the original hair color unchanged. Keep the current facial features and makeup unchanged.",
+    "male1_hair": "Professional Quiff Style Hair: Hair styled with strong-hold gel, swept upward and backward to create an elegant quiff-to-slicked-back silhouette. Achieve a sophisticated, mature appearance that conveys competence and professionalism. The hair has a polished shine with clean, defined hairline and minimal flyaways. Keep the original hair color unchanged. Keep the current facial features and makeup unchanged.",
+    "male2_hair": "Trendy Center Part Style Hair: Popular Asian center part hairstyle with straight to slightly wavy hair divided clearly down the middle. Create subtle volume at the crown with hair flowing naturally from temples along the cheekbones. Achieve organized texture bundles with healthy shine (no greasiness). Add gentle waves at the tips for movement and dynamism. Keep the original hair color unchanged. Keep the current facial features and makeup unchanged.",
 
     # Male styles with makeup only
-    "male0_makeup": "Fresh and Natural Style Makeup: Focus on grooming. Tidy the eyebrows and use lip balm to prevent dryness. Avoid foundation and keep the skin tone even for a healthy appearance. Keep the current hairstyle unchanged.",
-    "male1_makeup": "Sophisticated and Conservative Style Makeup: Fill in sparse areas of the eyebrows for a defined shape. Use a translucent powder to control shine and maintain a clean look. Keep the current hairstyle unchanged.",
-    "male2_makeup": "Soft and Casual Style Makeup: Use an eyebrow pencil to match the hair color and a light BB cream to even out the skin. A tinted lip balm adds a healthy flush of color. Keep the current hairstyle unchanged.",
+    "male0_makeup": "Korean K-Beauty Style Makeup: Achieve a porcelain-like matte yet luminous skin finish inspired by K-POP idols and Korean actors. Emphasize eyes with subtle eyeshadow and eyeliner, and enhance lips with tinted color. Apply strategic shading and highlighting to create dimensional facial contours. Create a sophisticated, polished appearance that complements modern fashion trends. Keep the current hairstyle unchanged.",
+    "male1_makeup": "Natural Grooming Style Makeup: The most common men's makeup approach designed to be undetectable. Use BB cream or concealer to naturally cover skin imperfections, dark circles, and acne marks. Groom and shape eyebrows for a clean, professional appearance. Focus on achieving a fresh, healthy complexion suitable for business and daily interactions. Keep the current hairstyle unchanged.",
+    "male2_makeup": "Natural Style Makeup: Enhance natural features with a focus on clear skin and subtle definition. Use a light foundation or BB cream for an even skin tone, conceal any imperfections without masking the natural texture. Apply a neutral eyeshadow or a hint of warmth to the eyelids for a healthy glow. Define brows gently with a pencil or powder to frame the face naturally. Finish with a clear or natural-toned lip balm for hydration and a soft, healthy look. The aim is to create a fresh, effortless appearance that highlights the subject's inherent attractiveness. Keep the current hairstyle unchanged.",
 
     # Male styles with both hair and makeup
-    "male0_both": "Fresh and Natural Style Hair: A neat, short haircut in a natural color. The front is kept down slightly to create a light, effortless feel. Use minimal wax to maintain the hair's natural flow. Makeup: Focus on grooming. Tidy the eyebrows and use lip balm to prevent dryness. Avoid foundation and keep the skin tone even for a healthy appearance.",
-    "male1_both": "Sophisticated and Conservative Style Hair: Dark, short hair with a sleek side part or slicked-back style. A glossy finish adds a polished, intelligent impression. Makeup: Fill in sparse areas of the eyebrows for a defined shape. Use a translucent powder to control shine and maintain a clean look.",
-    "male2_both": "Soft and Casual Style Hair: A light mushroom cut or a slightly longer wolf cut. Ash or beige hair colors will soften the overall look. Makeup: Use an eyebrow pencil to match the hair color and a light BB cream to even out the skin. A tinted lip balm adds a healthy flush of color.",
+    "male0_both": "Textured and Dynamic Style Hair: Hair styled with matte-finish wax to create natural movement and dimension. Leave a few strands of hair falling over the forehead for a refined, effortless look. The hair has a subtle sheen without being shiny or greasy, achieving an elegant finish. Keep the original hair color unchanged. Makeup: Achieve a porcelain-like matte yet luminous skin finish inspired by K-POP idols and Korean actors. Emphasize eyes with subtle eyeshadow and eyeliner, and enhance lips with tinted color. Apply strategic shading and highlighting to create dimensional facial contours. Create a sophisticated, polished appearance that complements modern fashion trends.",
+    "male1_both": "Professional Quiff Style Hair: Hair styled with strong-hold gel, swept upward and backward to create an elegant quiff-to-slicked-back silhouette. Achieve a sophisticated, mature appearance that conveys competence and professionalism. The hair has a polished shine with clean, defined hairline and minimal flyaways. Keep the original hair color unchanged. Makeup: The most common men's makeup approach designed to be undetectable. Use BB cream or concealer to naturally cover skin imperfections, dark circles, and acne marks. Groom and shape eyebrows for a clean, professional appearance. Focus on achieving a fresh, healthy complexion suitable for business and daily interactions.",
+    "male2_both": "Trendy Center Part Style Hair: Popular Asian center part hairstyle with straight to slightly wavy hair divided clearly down the middle. Create subtle volume at the crown with hair flowing naturally from temples along the cheekbones. Achieve organized texture bundles with healthy shine (no greasiness). Add gentle waves at the tips for movement and dynamism. Keep the original hair color unchanged. Makeup: Enhance natural features with a focus on clear skin and subtle definition. Use a light foundation or BB cream for an even skin tone, conceal any imperfections without masking the natural texture. Apply a neutral eyeshadow or a hint of warmth to the eyelids for a healthy glow. Define brows gently with a pencil or powder to frame the face naturally. Finish with a clear or natural-toned lip balm for hydration and a soft, healthy look. The aim is to create a fresh, effortless appearance that highlights the subject's inherent attractiveness.",
 
     # Female styles with hair only
-    "female0_hair": "Elegant and Feminine Style Hair: A sleek, glossy long hairstyle or a soft, inward-curling bob. The bangs can be swept to the side or kept as a see-through fringe for a lighter feel. Keep the current facial features and makeup unchanged.",
-    "female1_hair": "Cool and Professional Style Hair: A sharp chin-length bob or a medium-length style with swept-back bangs. Dark hair colors create a sophisticated and composed impression. Keep the current facial features and makeup unchanged.",
-    "female2_hair": "Cute and Doll-like Style Hair: A cute outward or inward-curling bob with straight-across bangs. Adding highlights can create a fun, dimensional look. Keep the current facial features and makeup unchanged.",
+    "female0_hair": "Cute and Playful Style Hair: Create adorable impressions with soft, rounded silhouettes. Style options include fluffy bun hairstyles with wisps left around the face, or twin tails positioned high for energetic cuteness or low near the ears for a soft, girly impression. Add gentle curls to loose strands for extra sweetness. Maintain voluminous, bouncy textures throughout. Keep the original hair color unchanged. Keep the current facial features and makeup unchanged.",
+    "female1_hair": "Cool and Sharp Style Hair: Achieve a sleek, intellectual atmosphere with clean lines. Style straight hair with high shine for a sophisticated, polished look. Alternative wet-look styling with styling products creates a modern, editorial vibe. Keep hair smooth and controlled for a sharp, confident impression. Maintain the original hair color unchanged. Keep the current facial features and makeup unchanged.",
+    "female2_hair": "Natural and Effortless Style Hair: Create relaxed, gentle impressions with unstudied styling. Apply loose waves throughout the hair and tousle with fingers for airy, soft movement. Style in a low, casual ponytail with intentionally messy texture and face-framing pieces left out for a natural finish. Keep the original hair color unchanged. Keep the current facial features and makeup unchanged.",
 
     # Female styles with makeup only
-    "female0_makeup": "Elegant and Feminine Style Makeup: A dewy, translucent base. Use soft, skin-tone eyeshadows like beige or pale pink. A glossy finish on the lips gives a natural, fresh look. Keep the current hairstyle unchanged.",
-    "female1_makeup": "Cool and Professional Style Makeup: A matte foundation. A sharp winged eyeliner adds a cool edge, while nude or deep-colored lipstick enhances the mature, elegant vibe. Keep the current hairstyle unchanged.",
-    "female2_makeup": "Cute and Doll-like Style Makeup: Use glittery eyeshadows and highlight the undereye bags (aegyo sal) for a sparkling effect. Pink or coral blush on the apples of the cheeks and a cute-colored lipstick complete the youthful look. Keep the current hairstyle unchanged.",
+    "female0_makeup": "Natural Clean Beauty Makeup: Enhance natural skin texture to bring out healthy radiance. Apply foundation thinly to avoid heavy coverage. Choose skin-toned blush and lip colors that blend seamlessly. Use brown or beige eyeshadows for subtle contouring. Create a fresh, clean impression as if barely wearing makeup. Perfect for school, office, and daily occasions. Keep the current hairstyle unchanged.",
+    "female1_makeup": "Feminine Romantic Makeup: Emphasize feminine charm and sweetness. Apply pink or coral blush softly for a gentle glow. Choose glossy pink or red lips for vibrant appeal. Use soft pink or brown eyeshadows for a tender atmosphere. Apply mascara thoroughly to make eyes appear larger. Perfect for dates and special occasions when you want to enhance feminine allure. Keep the current hairstyle unchanged.",
+    "female2_makeup": "Cool Sophisticated Makeup: Create a strong, confident impression. Finish base makeup with semi-matte or matte texture. Use effective shading and highlighting to emphasize facial structure. Draw defined eyeliner and use cool-toned eyeshadows like grey, khaki, or brown for depth. Select calm lip colors like beige or bordeaux for an intellectual, mature atmosphere. Keep the current hairstyle unchanged.",
 
     # Female styles with both hair and makeup
-    "female0_both": "Elegant and Feminine Style Hair: A sleek, glossy long hairstyle or a soft, inward-curling bob. The bangs can be swept to the side or kept as a see-through fringe for a lighter feel. Makeup: A dewy, translucent base. Use soft, skin-tone eyeshadows like beige or pale pink. A glossy finish on the lips gives a natural, fresh look.",
-    "female1_both": "Cool and Professional Style Hair: A sharp chin-length bob or a medium-length style with swept-back bangs. Dark hair colors create a sophisticated and composed impression. Makeup: A matte foundation. A sharp winged eyeliner adds a cool edge, while nude or deep-colored lipstick enhances the mature, elegant vibe.",
-    "female2_both": "Cute and Doll-like Style Hair: A cute outward or inward-curling bob with straight-across bangs. Adding highlights can create a fun, dimensional look. Makeup: Use glittery eyeshadows and highlight the undereye bags (aegyo sal) for a sparkling effect. Pink or coral blush on the apples of the cheeks and a cute-colored lipstick complete the youthful look.",
+    "female0_both": "Cute and Playful Style Hair: Create adorable impressions with soft, rounded silhouettes. Style options include fluffy bun hairstyles with wisps left around the face, or twin tails positioned high for energetic cuteness or low near the ears for a soft, girly impression. Add gentle curls to loose strands for extra sweetness. Maintain voluminous, bouncy textures throughout. Keep the original hair color unchanged. Makeup: Enhance natural skin texture to bring out healthy radiance. Apply foundation thinly to avoid heavy coverage. Choose skin-toned blush and lip colors that blend seamlessly. Use brown or beige eyeshadows for subtle contouring. Create a fresh, clean impression as if barely wearing makeup. Perfect for school, office, and daily occasions.",
+    "female1_both": "Cool and Sharp Style Hair: Achieve a sleek, intellectual atmosphere with clean lines. Style straight hair with high shine for a sophisticated, polished look. Alternative wet-look styling with styling products creates a modern, editorial vibe. Keep hair smooth and controlled for a sharp, confident impression. Maintain the original hair color unchanged. Makeup: Emphasize feminine charm and sweetness. Apply pink or coral blush softly for a gentle glow. Choose glossy pink or red lips for vibrant appeal. Use soft pink or brown eyeshadows for a tender atmosphere. Apply mascara thoroughly to make eyes appear larger. Perfect for dates and special occasions when you want to enhance feminine allure.",
+    "female2_both": "Natural and Effortless Style Hair: Create relaxed, gentle impressions with unstudied styling. Apply loose waves throughout the hair and tousle with fingers for airy, soft movement. Style in a low, casual ponytail with intentionally messy texture and face-framing pieces left out for a natural finish. Keep the original hair color unchanged. Makeup: Create a strong, confident impression. Finish base makeup with semi-matte or matte texture. Use effective shading and highlighting to emphasize facial structure. Draw defined eyeliner and use cool-toned eyeshadows like grey, khaki, or brown for depth. Select calm lip colors like beige or bordeaux for an intellectual, mature atmosphere.",
 
     # Neutral styles with hair only
-    "neutral0_hair": "Natural and Androgynous Style Hair: A versatile mushroom short cut or a short style that exposes the ears. Dark hair colors contribute to a cool and neutral look. Keep the current facial features and makeup unchanged.",
-    "neutral1_hair": "Cool and Edgy Style Hair: A wet-look short cut or a two-block undercut with shaved sides. These styles are distinct yet cohesive. Keep the current facial features and makeup unchanged.",
-    "neutral2_hair": "Soft and Feminine Style Hair: A soft perm or a slightly longer wolf cut. Lighter hair colors create a gentle and relaxed atmosphere. Keep the current facial features and makeup unchanged.",
+    "neutral0_hair": "Cool and Sharp Style Hair: Eliminate excess elements and create linear silhouettes for an intellectual, refined atmosphere. Use wax or gel to achieve tight, controlled textures for a clean impression. Style with straight lines - keep bangs perfectly straight or sides tightly controlled to emphasize the cool aesthetic. Maintain sleek, minimalist styling throughout. Keep the original hair color unchanged. Keep the current facial features and makeup unchanged.",
+    "neutral1_hair": "Casual and Rough Style Hair: Embrace an unstudied, tousled aesthetic to bring out relaxed, natural charm. Create messy movement with perms or styling products for a carefree vibe. Focus on defined hair bundles and texture separation for lightness and dimensional depth. Style with intentional dishevelment for effortless appeal. Keep the original hair color unchanged. Keep the current facial features and makeup unchanged.",
+    "neutral2_hair": "Mode and Individualist Style Hair: Feature asymmetrical designs and textural variations for high-fashion, unique styling. Create mysterious atmospheres with left-right asymmetric silhouettes. Apply oils or gels for wet-look textures that add editorial, modern impressions. Emphasize avant-garde elements and artistic expression. Keep the original hair color unchanged. Keep the current facial features and makeup unchanged.",
 
     # Neutral styles with makeup only
     "neutral0_makeup": "Natural and Androgynous Style Makeup: Focus on skin prep and grooming. Use moisturizers on dry areas to create a healthy glow, and simply groom the eyebrows for a clean finish. Keep the current hairstyle unchanged.",
@@ -55,17 +55,29 @@ STYLE_VARIATIONS = {
     "neutral2_makeup": "Soft and Feminine Style Makeup: A dewy foundation with soft, sheer eyeshadows and blush in pink or orange tones. A glossy lip adds a touch of femininity and warmth. Keep the current hairstyle unchanged.",
 
     # Neutral styles with both hair and makeup
-    "neutral0_both": "Natural and Androgynous Style Hair: A versatile mushroom short cut or a short style that exposes the ears. Dark hair colors contribute to a cool and neutral look. Makeup: Focus on skin prep and grooming. Use moisturizers on dry areas to create a healthy glow, and simply groom the eyebrows for a clean finish.",
-    "neutral1_both": "Cool and Edgy Style Hair: A wet-look short cut or a two-block undercut with shaved sides. These styles are distinct yet cohesive. Makeup: A matte base and a sharp contour to define the face. A slightly winged eyeliner and a matte lip color that subdues natural tones will enhance a sleek, modern look.",
-    "neutral2_both": "Soft and Feminine Style Hair: A soft perm or a slightly longer wolf cut. Lighter hair colors create a gentle and relaxed atmosphere. Makeup: A dewy foundation with soft, sheer eyeshadows and blush in pink or orange tones. A glossy lip adds a touch of femininity and warmth.",
+    "neutral0_both": "Cool and Sharp Style Hair: Eliminate excess elements and create linear silhouettes for an intellectual, refined atmosphere. Use wax or gel to achieve tight, controlled textures for a clean impression. Style with straight lines - keep bangs perfectly straight or sides tightly controlled to emphasize the cool aesthetic. Maintain sleek, minimalist styling throughout. Keep the original hair color unchanged. Makeup: Focus on skin prep and grooming. Use moisturizers on dry areas to create a healthy glow, and simply groom the eyebrows for a clean finish.",
+    "neutral1_both": "Casual and Rough Style Hair: Embrace an unstudied, tousled aesthetic to bring out relaxed, natural charm. Create messy movement with perms or styling products for a carefree vibe. Focus on defined hair bundles and texture separation for lightness and dimensional depth. Style with intentional dishevelment for effortless appeal. Keep the original hair color unchanged. Makeup: A matte base and a sharp contour to define the face. A slightly winged eyeliner and a matte lip color that subdues natural tones will enhance a sleek, modern look.",
+    "neutral2_both": "Mode and Individualist Style Hair: Feature asymmetrical designs and textural variations for high-fashion, unique styling. Create mysterious atmospheres with left-right asymmetric silhouettes. Apply oils or gels for wet-look textures that add editorial, modern impressions. Emphasize avant-garde elements and artistic expression. Keep the original hair color unchanged. Makeup: A dewy foundation with soft, sheer eyeshadows and blush in pink or orange tones. A glossy lip adds a touch of femininity and warmth.",
 }
 
 STYLE_IMAGE_GENERATION_PROMPT = """\
-Generate a realistic image of the given face photo with a perfect $GENDER_TEXT hairstyle and makeup style.
-STYLE: $STYLE_VARIATION
-Please make the style natural and in line with current trends. Avoid anything too bizarre or extreme.
-Keep the facial features and identity unchanged, only modify the hairstyle and makeup.
-Provide a brief description of the style and steps to achieve this look and you must generate the image.
+Transform the provided portrait with professional hairstyling and makeup artistry while preserving the subject's natural identity and facial features.
+
+GENDER: $GENDER_TEXT
+STYLE DIRECTION: $STYLE_VARIATION
+
+Technical Requirements:
+- Maintain photorealistic quality with natural lighting and skin texture
+- Preserve the subject's unique facial structure, features, and identity completely
+- Apply sophisticated hairstyling and makeup techniques following current beauty trends
+- Ensure seamless integration between the original face and new styling elements
+- Create a polished, magazine-quality result suitable for professional beauty portfolios
+
+Output Requirements:
+1. Generate a high-quality transformed image with the specified styling
+2. Provide a concise description of the achieved look and key techniques applied
+
+The transformation should appear natural and achievable through professional styling, avoiding any unrealistic or artificial modifications to the person's fundamental appearance.
 """
 
 TRANSLATE_CUSTOM_REQUEST_PROMPT = """\
@@ -112,26 +124,71 @@ $COMPLEMENT
 - 必要な道具と製品
 
 **重要**: 各ステップには以下のフィールドを必ず含めてください：
-   - title: 日本語のステップタイトル
-   - description: 日本語の詳細な説明
-   - title_en: 英語のステップタイトル（必須）
-   - description_en: 英語の詳細な説明（必須）
+    - title: 日本語のステップタイトル
+    - description: 日本語の詳細な説明
+    - title_en: 英語のステップタイトル（必須）
+    - description_en: 英語の詳細な説明（必須）
 
 ステップ数は**最大5ステップまで**にしてください。
 このスタイルを学んでいる人にとって、明確でわかりやすい指示にしてください。
 """
 
 TUTORIAL_STEP_IMAGE_GENERATION_PROMPT = """\
-Generate completed face image with these changes to the provided face images.
-When two images are provided:
-- The first image is the previous step's result
-- The second image is the final target style
-Create a natural progression from the previous step towards the final style with the only following description. (Do not change other than the following description.)
+Generate a precise intermediate stage image showing the completion of a specific tutorial step.
+
+INPUT IMAGES:
+- Image 1: Current state (either initial face or partially styled from previous steps)
+- Image 2: Final target style (complete transformation reference)
+
+CURRENT STEP TO APPLY:
 $STEP_TITLE_EN: $STEP_DESCRIPTION_EN
-Ensure the changes are appropriate for this specific step while maintaining consistency with the overall transformation.
+
+TOOLS USED: $TOOLS_NEEDED
+
+Generation Requirements:
+- Apply ONLY the changes specified in this step's description
+- Extract relevant styling elements from the final image that correspond to this step
+- Preserve all existing progress from the current state image
+- Do NOT apply any transformations from future steps
+- Maintain photorealistic quality and natural transitions
+
+Technical Constraints:
+- Changes must be isolated to the specific area/aspect described in the step
+- If this step involves eye makeup, modify only the eye area
+- If this step involves hair styling, modify only the hair texture/shape specified
+- Keep untouched areas identical to the input state
+- Ensure the progression logically bridges the gap between current and final states
+
+Quality Standards:
+- Seamless blending between modified and unmodified areas
+- Consistent lighting and skin texture throughout
+- Natural-looking intermediate result that could exist in real life
+- Clear visible progress toward the final look without jumping ahead
+
+The output should represent exactly how the face would appear after completing this specific step in a real beauty tutorial, showing partial progress toward the final transformation.
 """
 
 TUTORIAL_STEP_VIDEO_GENERATION_PROMPT = """\
-Generate a video of the given face photo with the following instruction.
-$TITLE_EN: $DESCRIPTION_EN
+Create a realistic tutorial video showing the subject performing the specified beauty technique in real-time.
+
+TUTORIAL STEP: $TITLE_EN
+DETAILED INSTRUCTION: $DESCRIPTION_EN
+TOOLS NEEDED: $TOOLS_NEEDED
+
+Video Generation Requirements:
+- Show the subject's hands performing the actual styling/makeup application technique
+- Capture natural, realistic movements as if filming a real beauty tutorial
+- Display the gradual transformation as the technique is applied
+- Include appropriate tools being used (brushes, combs, styling products, etc.) (You don't need to use all the specified items. Please select the necessary tools for a portion of the operation.)
+- Maintain consistent lighting and camera angle throughout the sequence
+- Smooth, continuous action
+
+Visual Style:
+- Professional beauty tutorial aesthetic with clear visibility of the technique
+- Soft, flattering lighting that highlights the transformation process
+- Close-up framing that shows both the face and hands working
+- Smooth camera work without shakiness or abrupt movements
+- Natural pacing that matches real-world beauty application speed
+
+The video should appear as if professionally filmed in a beauty studio setting, showing the authentic process of someone applying the specified technique to achieve the desired look.
 """

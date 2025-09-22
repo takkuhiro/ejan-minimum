@@ -511,13 +511,13 @@ export default function TutorialPage() {
                   <div>
                     <h3 className="font-semibold mb-3">完成イメージ</h3>
                     {currentStepData.imageUrl ? (
-                      <div className="relative aspect-video rounded-lg overflow-hidden">
+                      <div className="relative aspect-video rounded-lg overflow-hidden bg-black/5">
                         <Image
                           src={currentStepData.imageUrl}
                           alt={`${currentStepData.title} result`}
                           width={800}
                           height={600}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-contain"
                           priority
                           onError={() => {
                             console.error(

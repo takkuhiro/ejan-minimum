@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -67,10 +67,6 @@ export default function StyleSelectionPage() {
     router.push("/customize");
   };
 
-  const handleCustomize = () => {
-    // Navigate to customization page
-    router.push("/customize");
-  };
 
   const handleImageError = (styleId: string) => {
     setImageLoadErrors((prev) => new Set(prev).add(styleId));
@@ -116,12 +112,12 @@ export default function StyleSelectionPage() {
             </h2>
             <div className="max-w-md mx-auto">
               <Card className="overflow-hidden">
-                <div className="relative w-full h-80">
+                <div className="relative w-full h-100">
                   <Image
                     src={originalImageUrl}
                     alt="アップロードした画像"
                     fill
-                    className="object-cover"
+                    className="object-contain w-full"
                     onError={(e) => {
                       console.error(
                         "Failed to load original image:",
@@ -145,7 +141,7 @@ export default function StyleSelectionPage() {
         </div>
 
         {styles.length > 0 ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {styles.map((style) => (
               <Card
                 key={style.id}
@@ -161,12 +157,12 @@ export default function StyleSelectionPage() {
               >
                 <CardHeader className="pb-3">
                   <div className="relative">
-                    <div className="relative w-full h-48 overflow-hidden rounded-lg">
+                    <div className="relative w-full h-90 overflow-hidden rounded-lg">
                       <Image
                         src={getImageSrc(style)}
                         alt={style.title}
                         fill
-                        className="object-cover"
+                        className="object-contain w-full"
                         onError={() => handleImageError(style.id)}
                       />
                     </div>
@@ -182,25 +178,9 @@ export default function StyleSelectionPage() {
                 </CardContent>
               </Card>
             ))}
-
-            {/* Custom Option */}
-            <Card
-              className="cursor-pointer transition-all duration-200 hover:shadow-lg border-dashed border-2 border-muted-foreground/30 hover:border-primary/50"
-              onClick={handleCustomize}
-            >
-              <CardContent className="flex flex-col items-center justify-center h-full min-h-[300px] text-center">
-                <div className="bg-muted rounded-full p-6 mb-4">
-                  <Plus className="w-8 h-8 text-muted-foreground" />
-                </div>
-                <CardTitle className="text-lg mb-2">カスタマイズ</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  自分だけのオリジナルスタイルを作成
-                </p>
-              </CardContent>
-            </Card>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {[1, 2, 3].map((i) => (
               <Card key={i}>
                 <CardHeader className="pb-3">

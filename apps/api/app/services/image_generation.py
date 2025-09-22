@@ -64,7 +64,7 @@ class JapaneseStyleInfo(BaseModel):
     """Model for Japanese style information."""
 
     title: str = Field(description="日本語のタイトル（10文字以内）")
-    description: str = Field(description="日本語の説明文（30文字以内）")
+    description: str = Field(description="日本語の説明文（50文字以内）")
 
 
 def generate_style_prompt(
