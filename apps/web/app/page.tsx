@@ -244,9 +244,6 @@ export default function WelcomePage() {
 
         {/* Main Form */}
         <Card className="max-w-2xl mx-auto">
-          <CardHeader>
-            <CardTitle className="text-2xl text-center">始めましょう</CardTitle>
-          </CardHeader>
           <CardContent className="space-y-8">
             {/* Gender Selection */}
             <div className="space-y-4">
@@ -314,6 +311,9 @@ export default function WelcomePage() {
                 </>
               )}
             </Button>
+            <p className="text-sm text-muted-foreground text-center">
+              この処理は約1分かかります
+            </p>
           </CardContent>
         </Card>
       </div>

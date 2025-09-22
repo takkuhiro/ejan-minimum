@@ -452,84 +452,86 @@ export default function TutorialPage() {
                   </div>
                 )}
 
-                {/* Video Player */}
-                <div className="relative mb-6">
-                  <div className="aspect-video bg-black rounded-lg overflow-hidden">
-                    {currentStepData.videoUrl ? (
-                      <>
-                        <video
-                          ref={videoRef}
-                          src={currentStepData.videoUrl}
-                          className="w-full h-full object-contain"
-                          loop
-                          playsInline
-                          role="video"
-                          aria-label={`${currentStepData.title} tutorial video`}
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                          <Button
-                            size="lg"
-                            onClick={toggleVideoPlayback}
-                            className="bg-black/50 hover:bg-black/70 text-white pointer-events-auto"
-                            aria-label={isVideoPlaying ? "一時停止" : "再生"}
-                          >
-                            {isVideoPlaying ? (
-                              <Pause className="w-6 h-6" />
-                            ) : (
-                              <Play className="w-6 h-6" />
-                            )}
-                          </Button>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-muted">
-                        <div className="text-center">
-                          <div className="animate-pulse mb-2">
-                            <Clock className="w-8 h-8 text-muted-foreground mx-auto" />
+                {/* Video and Image Display */}
+                <div className="grid md:grid-cols-2 gap-4 mb-6">
+                  {/* Video Player */}
+                  <div>
+                    <h3 className="font-semibold mb-3">動画で見る</h3>
+                    <div className="relative">
+                      <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                        {currentStepData.videoUrl ? (
+                          <>
+                            <video
+                              ref={videoRef}
+                              src={currentStepData.videoUrl}
+                              className="w-full h-full object-contain"
+                              playsInline
+                              role="video"
+                              aria-label={`${currentStepData.title} tutorial video`}
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                              <Button
+                                size="lg"
+                                onClick={toggleVideoPlayback}
+                                className="bg-black/50 hover:bg-black/70 text-white pointer-events-auto"
+                                aria-label={isVideoPlaying ? "一時停止" : "再生"}
+                              >
+                                {isVideoPlaying ? (
+                                  <Pause className="w-6 h-6" />
+                                ) : (
+                                  <Play className="w-6 h-6" />
+                                )}
+                              </Button>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-muted">
+                            <div className="text-center">
+                              <div className="animate-pulse mb-2">
+                                <Clock className="w-8 h-8 text-muted-foreground mx-auto" />
+                              </div>
+                              <p className="text-muted-foreground">
+                                {videoStatuses[currentStep + 1] === "completed"
+                                  ? "動画を読み込み中..."
+                                  : videoStatuses[currentStep + 1] === "failed"
+                                    ? "動画生成に失敗しました"
+                                    : videoStatuses[currentStep + 1] ===
+                                        "processing"
+                                      ? "動画を生成中..."
+                                      : "動画を準備中..."}
+                              </p>
+                            </div>
                           </div>
-                          <p className="text-muted-foreground">
-                            {videoStatuses[currentStep + 1] === "completed"
-                              ? "動画を読み込み中..."
-                              : videoStatuses[currentStep + 1] === "failed"
-                                ? "動画生成に失敗しました"
-                                : videoStatuses[currentStep + 1] ===
-                                    "processing"
-                                  ? "動画を生成中..."
-                                  : "動画を準備中..."}
-                          </p>
-                        </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Step Image */}
+                  <div>
+                    <h3 className="font-semibold mb-3">完成イメージ</h3>
+                    {currentStepData.imageUrl ? (
+                      <div className="relative aspect-video rounded-lg overflow-hidden">
+                        <Image
+                          src={currentStepData.imageUrl}
+                          alt={`${currentStepData.title} result`}
+                          width={800}
+                          height={600}
+                          className="w-full h-full object-cover"
+                          priority
+                          onError={() => {
+                            console.error(
+                              `Failed to load image: ${currentStepData.imageUrl}`,
+                            );
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
+                        <p className="text-muted-foreground">画像を準備中...</p>
                       </div>
                     )}
                   </div>
-                </div>
-
-                {/* Step Image */}
-                <div className="mb-6">
-                  <h3 className="font-semibold mb-3">完成イメージ</h3>
-                  {currentStepData.imageUrl ? (
-                    <div className="relative w-full max-w-md mx-auto rounded-lg overflow-hidden">
-                      <Image
-                        src={currentStepData.imageUrl}
-                        alt={`${currentStepData.title} result`}
-                        width={800}
-                        height={600}
-                        className="w-full h-auto"
-                        priority
-                        onError={() => {
-                          console.error(
-                            `Failed to load image: ${currentStepData.imageUrl}`,
-                          );
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-full max-w-md mx-auto aspect-[4/3] bg-muted rounded-lg flex items-center justify-center">
-                      <p className="text-muted-foreground">画像を準備中...</p>
-                      <p>
-                        currentStepData.imageUrl: {currentStepData.imageUrl}
-                      </p>
-                    </div>
-                  )}
                 </div>
 
                 {/* Tools */}

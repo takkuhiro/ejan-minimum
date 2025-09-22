@@ -3,10 +3,8 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Plus, Check, Wand2 } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -19,8 +17,6 @@ export default function StyleSelectionPage() {
 
   const [styles, setStyles] = useState<Style[]>([]);
   const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null);
-  const [selectedStyle, setSelectedStyle] = useState<Style | null>(null);
-  const [customizationText, setCustomizationText] = useState("");
   const [imageLoadErrors, setImageLoadErrors] = useState<Set<string>>(
     new Set(),
   );
@@ -56,36 +52,23 @@ export default function StyleSelectionPage() {
   }, [router]);
 
   const handleStyleSelect = (style: Style) => {
-    setSelectedStyle(style);
-
-    // Save selection to localStorage for recovery
-    localStorage.setItem("selectedStyle", JSON.stringify(style));
-  };
-
-  const handleCustomize = () => {
-    // Navigate to customization page
-    router.push("/customize");
-  };
-
-  const handleConfirmSelection = () => {
-    if (!selectedStyle) {
-      toast.error("スタイルを選択してください");
-      return;
-    }
-
     if (!originalImageUrl) {
       toast.error("元画像が見つかりません");
       return;
     }
 
-    // Save only the selected style with originalImageUrl embedded
+    // Save the selected style with originalImageUrl embedded and navigate to customize page
     const styleWithOriginal = {
-      ...selectedStyle,
+      ...style,
       originalImageUrl: originalImageUrl,
     };
 
     localStorage.setItem("selectedStyle", JSON.stringify(styleWithOriginal));
-    toast.success("カスタマイズページに移動します");
+    router.push("/customize");
+  };
+
+  const handleCustomize = () => {
+    // Navigate to customization page
     router.push("/customize");
   };
 
@@ -166,11 +149,7 @@ export default function StyleSelectionPage() {
             {styles.map((style) => (
               <Card
                 key={style.id}
-                className={`cursor-pointer transition-all duration-200 hover:shadow-lg ${
-                  selectedStyle?.id === style.id
-                    ? "ring-2 ring-primary shadow-lg"
-                    : ""
-                }`}
+                className="cursor-pointer transition-all duration-200 hover:shadow-lg hover:ring-2 hover:ring-primary"
                 onClick={() => handleStyleSelect(style)}
                 role="button"
                 tabIndex={0}
@@ -191,11 +170,6 @@ export default function StyleSelectionPage() {
                         onError={() => handleImageError(style.id)}
                       />
                     </div>
-                    {selectedStyle?.id === style.id && (
-                      <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1">
-                        <Check className="w-4 h-4 lucide-check" />
-                      </div>
-                    )}
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -241,44 +215,8 @@ export default function StyleSelectionPage() {
           </div>
         )}
 
-        {/* Customization Input */}
-        {selectedStyle && (
-          <Card className="max-w-2xl mx-auto mb-8">
-            <CardContent className="pt-6">
-              <Label htmlFor="customization">
-                カスタマイズ要望（オプション）
-              </Label>
-              <div className="flex gap-2 mt-2">
-                <Input
-                  id="customization"
-                  type="text"
-                  placeholder="例：もっとナチュラルに、赤みを抑えて..."
-                  value={customizationText}
-                  onChange={(e) => setCustomizationText(e.target.value)}
-                  className="flex-1"
-                />
-                <Button variant="outline" size="icon">
-                  <Wand2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Action Buttons */}
-        <div className="flex justify-center space-x-4">
-          <Button
-            onClick={handleConfirmSelection}
-            disabled={!selectedStyle}
-            size="lg"
-            className="px-8"
-          >
-            このスタイルで進む
-          </Button>
-        </div>
-
         {/* Help Text */}
-        <div className="text-center mt-8">
+        <div className="text-center mt-12">
           <p className="text-sm text-muted-foreground">
             スタイルを選択後、さらに細かい調整が可能です
           </p>
