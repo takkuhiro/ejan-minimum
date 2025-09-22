@@ -224,7 +224,7 @@ export default function WelcomePage() {
             </CardHeader>
             <CardContent>
               <CardDescription>
-                性別や好みに合わせて、あなただけのメイクアップスタイルをカスタマイズ
+                性別や好みに合わせて、あなただけのスタイルをカスタマイズ
               </CardDescription>
             </CardContent>
           </Card>
@@ -283,8 +283,8 @@ export default function WelcomePage() {
 
             {/* Photo Upload */}
             <div className="space-y-4">
-              <Label className="text-lg font-semibold">
-                顔写真をアップロード
+              <Label className="text-lg font-semibold text-center block">
+                顔写真をアップロードしてください
               </Label>
               <PhotoUpload
                 onPhotoUpload={handlePhotoUpload}

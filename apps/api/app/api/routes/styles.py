@@ -6,7 +6,11 @@ from typing import Dict
 
 from fastapi import APIRouter, HTTPException, status
 
-from app.models.request import GenerateStylesRequest, Gender as RequestGender
+from app.models.request import (
+    GenerateStylesRequest,
+    Gender as RequestGender,
+    CustomizeStyleRequest,
+)
 from app.models.response import GenerateStylesResponse, GeneratedStyle
 from app.services.style_generation import StyleGenerationService
 from app.services.image_generation import Gender as ServiceGender
@@ -164,3 +168,45 @@ def _is_valid_image_format(data: bytes) -> bool:
         return True
 
     return False
+
+
+@router.post(
+    "/customize",
+    response_model=GeneratedStyle,
+    status_code=status.HTTP_200_OK,
+    summary="Generate customized style from two images",
+    description="Generates a customized style based on original photo, reference style, and custom request",
+)
+async def customize_style(request: CustomizeStyleRequest) -> GeneratedStyle:
+    """
+    Generate a customized style using two images and custom request.
+
+    Args:
+        request: Request containing original image URL, style image URL, and custom request
+
+    Returns:
+        Response with generated customized style
+
+    Raises:
+        HTTPException: If generation fails or validation errors occur
+    """
+    try:
+        # Generate customized style using the service
+        service = StyleGenerationService()
+        style, _ = await service.customize_style(
+            original_image_url=request.original_image_url,
+            style_image_url=request.style_image_url,
+            custom_request=request.custom_request,
+        )
+
+        # Store style for later retrieval
+        generated_styles_store[style.id] = style
+
+        return style
+
+    except Exception as e:
+        logger.error(f"Failed to customize style: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"AI service error: {str(e)}",
+        )

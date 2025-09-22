@@ -98,6 +98,27 @@ class TutorialGenerationRequest(BaseModel):
     )
 
 
+class CustomizeStyleRequest(BaseModel):
+    """Request model for style customization using two images."""
+
+    original_image_url: str = Field(
+        ...,
+        description="URL of the original uploaded user photo",
+        alias="originalImageUrl",  # Accept camelCase from frontend
+    )
+    style_image_url: str = Field(
+        ...,
+        description="URL of the selected style image",
+        alias="styleImageUrl",  # Accept camelCase from frontend
+    )
+    custom_request: str = Field(
+        ...,
+        max_length=1000,
+        description="Custom style request text from user",
+        alias="customRequest",  # Accept camelCase from frontend
+    )
+
+
 # Alias for consistency with API naming
 GenerateStylesRequest = PhotoUploadRequest
 GenerateTutorialRequest = TutorialGenerationRequest

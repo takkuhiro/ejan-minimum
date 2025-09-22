@@ -7,6 +7,7 @@ from typing import List, Optional
 from dataclasses import dataclass
 from io import BytesIO
 import time
+import httpx
 
 from PIL import Image
 from pydantic import BaseModel, Field
@@ -17,6 +18,8 @@ from app.api.prompts import (
     STYLE_INFO_GENERATION_PROMPT,
     STYLE_VARIATIONS,
     STYLE_IMAGE_GENERATION_PROMPT,
+    STYLE_CUSTOMIZE_PROMPT,
+    TRANSLATE_CUSTOM_REQUEST_PROMPT,
 )
 
 
@@ -103,7 +106,7 @@ class ImageGenerationService:
         self.ai_client = ai_client
         self.storage_service = storage_service
         self.model_name = "gemini-2.5-flash-image-preview"
-        self.sub_model_name = "gemini-2.0-flash-lite"
+        self.sub_model_name = "gemini-2.5-flash-lite"
 
     async def generate_single_style(
         self,
@@ -353,3 +356,168 @@ class ImageGenerationService:
                 return first_line
 
         return "Style"
+
+    async def download_image_from_url(self, image_url: str) -> Image.Image:
+        """Download image from URL and return as PIL Image.
+
+        Args:
+            image_url: URL of the image to download.
+
+        Returns:
+            PIL Image object.
+
+        Raises:
+            ImageGenerationError: If download or processing fails.
+        """
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(image_url, timeout=30)
+                response.raise_for_status()
+                image_data = response.content
+
+            # Validate size (10MB limit)
+            if not self.validate_image_size(image_data):
+                raise ImageGenerationError("Downloaded image exceeds 10MB limit")
+
+            # Create PIL Image
+            image = Image.open(BytesIO(image_data))
+            return image
+
+        except httpx.HTTPError as e:
+            raise ImageGenerationError(f"Failed to download image: {e}")
+        except Exception as e:
+            raise ImageGenerationError(f"Failed to process downloaded image: {e}")
+
+    async def generate_customized_style(
+        self,
+        original_image_url: str,
+        style_image_url: str,
+        custom_request: str,
+    ) -> StyleGeneration:
+        """Generate a customized style using two input images.
+
+        Args:
+            original_image_url: URL of the original user photo.
+            style_image_url: URL of the reference style image.
+            custom_request: Custom style request text.
+
+        Returns:
+            Generated customized style.
+
+        Raises:
+            ImageGenerationError: If generation fails.
+        """
+        # Download both images
+        try:
+            original_image = await self.download_image_from_url(original_image_url)
+            style_image = await self.download_image_from_url(style_image_url)
+        except Exception as e:
+            raise ImageGenerationError(f"Failed to download images: {e}")
+
+        max_retries = 3
+        retry_count = 0
+        base_sleep_time = 2
+
+        while retry_count < max_retries:
+            try:
+                # Geminiで日本語のcustom_requestを英語に翻訳する
+                translate_prompt = TRANSLATE_CUSTOM_REQUEST_PROMPT.replace(
+                    "$CUSTOM_REQUEST", custom_request
+                )
+                translate_response = self.ai_client.generate_content(
+                    model=self.sub_model_name,
+                    prompt=translate_prompt,
+                )
+                custom_request_en = translate_response.text
+
+                # Create customized prompt
+                prompt = STYLE_CUSTOMIZE_PROMPT.replace(
+                    "$CUSTOM_REQUEST", custom_request_en
+                )
+
+                # Call AI API with both images
+                response = self.ai_client.generate_content(
+                    model=self.model_name,
+                    prompt=prompt,
+                    image=[original_image, style_image],
+                )
+
+                # Extract raw description
+                raw_description = self.ai_client.extract_text_from_response(response)
+                print(f"Customized style description: {raw_description}")
+                if not raw_description:
+                    raw_description = (
+                        f"Customized style based on user request: {custom_request[:50]}"
+                    )
+
+                # Generate Japanese title and description
+                try:
+                    prompt = STYLE_INFO_GENERATION_PROMPT.replace(
+                        "$RAW_DESCRIPTION", raw_description
+                    )
+                    japanese_response = self.ai_client.client.models.generate_content(
+                        model=self.sub_model_name,
+                        contents=prompt,
+                        config={
+                            "response_mime_type": "application/json",
+                            "response_schema": JapaneseStyleInfo,
+                        },
+                    )
+                    japanese_info: JapaneseStyleInfo = japanese_response.parsed
+                    title = japanese_info.title
+                    description = japanese_info.description
+                    print(f"Japanese title: {title}, description: {description}")
+                except Exception as e:
+                    print(f"Failed to generate Japanese text: {e}")
+                    title = "カスタムスタイル"
+                    description = (
+                        custom_request[:30]
+                        if custom_request
+                        else "カスタマイズされたスタイル"
+                    )
+
+                # Extract generated image
+                image_data = self.ai_client.extract_image_from_response(response)
+                if not image_data:
+                    retry_count += 1
+                    if retry_count < max_retries:
+                        sleep_time = min(base_sleep_time * (2 ** (retry_count - 1)), 20)
+                        print(
+                            f"No image generated, retrying in {sleep_time}s... (attempt {retry_count}/{max_retries})"
+                        )
+                        time.sleep(sleep_time)
+                        continue
+                    else:
+                        raise ImageGenerationError(
+                            f"No image generated after {max_retries} attempts"
+                        )
+
+                # Upload to storage
+                try:
+                    content_type = "image/png"
+                    image_url = self.storage_service.upload_image(
+                        image_data, content_type
+                    )
+
+                    return StyleGeneration(
+                        id=str(uuid.uuid4()),
+                        title=title,
+                        description=description,
+                        raw_description=raw_description,
+                        image_url=image_url,
+                    )
+                except Exception as e:
+                    raise ImageGenerationError(
+                        f"Failed to upload customized image to storage: {e}"
+                    )
+
+            except AIClientAPIError as e:
+                retry_count += 1
+                if retry_count < max_retries:
+                    sleep_time = min(base_sleep_time * (2 ** (retry_count - 1)), 20)
+                    print(
+                        f"API error, retrying in {sleep_time}s... (attempt {retry_count}/{max_retries})"
+                    )
+                    time.sleep(sleep_time)
+                else:
+                    raise ImageGenerationError(f"Failed to customize style: {e}")

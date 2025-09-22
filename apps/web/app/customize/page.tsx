@@ -7,142 +7,242 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Sparkles, Wand2, RefreshCw } from "lucide-react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { apiClient } from "@/lib/api/client";
 import { truncateTitle, truncateDescription } from "@/lib/utils";
-import type { Style } from "@/types/api";
+import {
+  isNetworkError,
+  isTimeoutError,
+  isServerError,
+  retryWithBackoff,
+} from "@/lib/api/error-handler";
+import type { Style, StyleDetailResponse } from "@/types/api";
+import Image from "next/image";
 
 // Extended style type for UI display
 interface ExtendedStyle extends Style {
   name: string;
   steps?: string[];
   tools?: string[];
+  originalImageUrl?: string;
 }
 
-// Mock style data - will be replaced with API data
-const mockStyleData: Record<string, ExtendedStyle> = {
-  "1": {
-    id: "1",
-    name: "ナチュラル美人",
-    title: "ナチュラル美人",
-    imageUrl: "/natural-japanese-makeup-result.jpg",
-    description:
-      "自然な美しさを引き出すソフトメイクで、日常使いにぴったりのスタイルです。",
-    steps: [
-      "ベースメイクで肌を整える",
-      "アイブロウで眉毛を自然に整える",
-      "アイシャドウでナチュラルなグラデーション",
-      "マスカラで自煨なまつ毛を演出",
-      "チークで血色感をプラス",
-      "リップで仕上げ",
-    ],
-    tools: [
-      "ファンデーション",
-      "アイブロウペンシル",
-      "アイシャドウパレット",
-      "マスカラ",
-      "チーク",
-      "リップ",
-    ],
-  },
-};
-
 export default function CustomizePage() {
-  const _router = useRouter();
-  const searchParams = useSearchParams();
-  const { toast } = useToast();
-  const [selectedStyleId, setSelectedStyleId] = useState<string | null>(null);
+  const router = useRouter();
+  const [_selectedStyle, setSelectedStyle] = useState<Style | null>(null);
+  const [_selectedStyleDetails, setSelectedStyleDetails] = useState<
+    StyleDetailResponse["style"] | null
+  >(null);
+  const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null);
+  const [currentStyle, setCurrentStyle] = useState<ExtendedStyle | null>(null);
   const [customRequest, setCustomRequest] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [currentStyle, setCurrentStyle] = useState<ExtendedStyle>(
-    mockStyleData["1"],
-  );
+  const [isGeneratingTutorial, setIsGeneratingTutorial] = useState(false);
   const [isFromScratch, setIsFromScratch] = useState(false);
 
   useEffect(() => {
-    // Get style ID from URL params
-    const styleId = searchParams.get("style");
+    // Load selected style from localStorage
+    const savedStyle = localStorage.getItem("selectedStyle");
 
-    if (styleId && styleId in mockStyleData) {
-      setSelectedStyleId(styleId);
-      setCurrentStyle(mockStyleData[styleId as keyof typeof mockStyleData]);
-    } else {
-      setIsFromScratch(true);
+    if (!savedStyle) {
+      // No style selected, redirect back to styles page
+      toast.error("スタイルが選択されていません");
+      router.push("/styles");
+      return;
     }
-  }, [searchParams]);
-
-  const handleGenerate = async () => {
-    if (!customRequest.trim()) return;
-
-    setIsGenerating(true);
 
     try {
-      // Call API to generate custom style
-      const response = await apiClient.generateCustomStyle({
-        styleId: selectedStyleId || undefined,
-        customRequest,
-        isFromScratch,
-      });
+      const styleData = JSON.parse(savedStyle) as Style & {
+        originalImageUrl?: string;
+        tools?: string[];
+        estimatedTime?: string;
+      };
+
+      setSelectedStyle(styleData);
+
+      // Extract originalImageUrl from the style data
+      if (styleData.originalImageUrl) {
+        setOriginalImageUrl(styleData.originalImageUrl);
+      }
+
+      // Create ExtendedStyle from the saved style
+      const extendedStyle: ExtendedStyle = {
+        ...styleData,
+        name: truncateTitle(styleData.title, 15),
+        steps: [],
+        tools: styleData.tools || [],
+      };
+
+      // If we have style details in the style data, use them
+      if (styleData.tools || styleData.estimatedTime) {
+        setSelectedStyleDetails({
+          ...styleData,
+          tools: styleData.tools,
+          estimatedTime: styleData.estimatedTime,
+        });
+      }
+
+      setCurrentStyle(extendedStyle);
+    } catch (error) {
+      console.error("Error loading style from localStorage:", error);
+      toast.error("スタイル情報の読み込みに失敗しました");
+      router.push("/styles");
+    }
+  }, [router]);
+
+  const handleGenerate = async () => {
+    if (!customRequest.trim() || !currentStyle || !originalImageUrl) return;
+
+    setIsGenerating(true);
+    const loadingToast = toast.loading("スタイルをカスタマイズ中...");
+
+    try {
+      // Call API to generate custom style using both original and style images
+      const response = await retryWithBackoff(
+        () =>
+          apiClient.generateCustomStyle({
+            originalImageUrl: originalImageUrl, // Original uploaded photo
+            styleImageUrl: currentStyle.imageUrl, // Selected style image
+            customRequest,
+          }),
+        {
+          maxRetries: 2,
+          baseDelay: 1000,
+          maxDelay: 5000,
+        },
+      );
+
+      toast.dismiss(loadingToast);
 
       if (response.success) {
-        // Update the style with API response
-        const { style } = response.data;
-        setCurrentStyle({
+        // Update the style with API response (response.data is the style directly)
+        const style = response.data;
+        const updatedStyle: ExtendedStyle = {
           ...style,
           name: truncateTitle(style.title, 15),
-          steps: style.steps || currentStyle.steps,
-          tools: style.tools || currentStyle.tools,
-        });
+          steps: currentStyle.steps, // Keep existing steps
+          tools: currentStyle.tools, // Keep existing tools
+          originalImageUrl: originalImageUrl, // Preserve original image URL
+        };
 
-        toast({
-          title: "スタイルを更新しました",
+        setCurrentStyle(updatedStyle);
+        // Also update the selected style
+        setSelectedStyle(style);
+
+        toast.success("スタイルを更新しました", {
           description: "カスタマイズ内容が反映されました",
         });
       } else {
-        throw new Error(response.error.message);
+        const error = response.error;
+        let errorMessage = "カスタマイズに失敗しました";
+
+        if (isNetworkError(error)) {
+          errorMessage = "ネットワーク接続を確認してください";
+        } else if (isTimeoutError(error)) {
+          errorMessage = "処理がタイムアウトしました";
+        } else if (isServerError(error)) {
+          errorMessage = "サーバーエラーが発生しました";
+        }
+
+        toast.error(errorMessage, {
+          duration: 5000,
+          action: {
+            label: "再試行",
+            onClick: () => handleGenerate(),
+          },
+        });
       }
     } catch (error) {
-      // For testing, fall back to mock data
-      if (process.env.NODE_ENV === "test" || !process.env.NEXT_PUBLIC_API_URL) {
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-        setCurrentStyle({
-          ...currentStyle,
-          name: "カスタマイズされたスタイル",
-          title: "カスタマイズされたスタイル",
-          description: `${currentStyle.description} カスタマイズされたスタイルです。`,
-        });
-        toast({
-          title: "スタイルを更新しました",
-          description: "カスタマイズ内容が反映されました",
-        });
-      } else {
-        toast({
-          title: "エラーが発生しました",
-          description:
-            error instanceof Error ? error.message : "もう一度お試しください",
-          variant: "destructive",
-        });
-      }
+      toast.dismiss(loadingToast);
+      console.error("Error generating custom style:", error);
+      toast.error("エラーが発生しました", {
+        description:
+          error instanceof Error ? error.message : "もう一度お試しください",
+        duration: 5000,
+      });
     } finally {
       setIsGenerating(false);
     }
   };
 
-  const handleConfirm = () => {
-    // Since customization page is currently not actively used,
-    // we'll keep this function empty for now
-    // TODO: Implement proper tutorial generation flow if this page is reactivated
-    toast({
-      title: "この機能は現在利用できません",
-      description: "スタイル選択ページからお試しください",
-      variant: "destructive",
-    });
+  const handleConfirm = async () => {
+    if (!currentStyle || !originalImageUrl) {
+      toast.error("必要な情報が不足しています");
+      return;
+    }
+
+    setIsGeneratingTutorial(true);
+    const loadingToast = toast.loading("チュートリアルを生成中...");
+
+    // Prepare raw description
+    const rawDescription =
+      currentStyle.rawDescription || currentStyle.description || "";
+
+    try {
+      const request = {
+        rawDescription: rawDescription,
+        originalImageUrl: originalImageUrl,
+        styleId: currentStyle.id,
+        finalStyleImageUrl: currentStyle.imageUrl, // Use the current (possibly regenerated) style image
+        ...(customRequest && { customization: customRequest }),
+      };
+
+      const response = await retryWithBackoff(
+        () => apiClient.generateTutorial(request),
+        {
+          maxRetries: 3,
+          baseDelay: 1000,
+          maxDelay: 10000,
+        },
+      );
+
+      toast.dismiss(loadingToast);
+
+      if (response.success) {
+        // Save tutorial data to localStorage
+        localStorage.setItem("currentTutorial", JSON.stringify(response.data));
+
+        toast.success("チュートリアルの生成を開始しました");
+
+        // Navigate to tutorial page with the generated tutorial ID
+        const tutorialId = response.data.id;
+        router.push(`/tutorial?id=${tutorialId}`);
+      } else {
+        const error = response.error;
+        let errorMessage = "チュートリアルの生成に失敗しました";
+
+        if (isNetworkError(error)) {
+          errorMessage = "ネットワーク接続を確認してください";
+        } else if (isTimeoutError(error)) {
+          errorMessage = "処理がタイムアウトしました。もう一度お試しください";
+        } else if (isServerError(error)) {
+          errorMessage =
+            "サーバーエラーが発生しました。しばらく待ってから再試行してください";
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+
+        toast.error(errorMessage, {
+          duration: 5000,
+          action: {
+            label: "再試行",
+            onClick: () => handleConfirm(),
+          },
+        });
+      }
+    } catch (error) {
+      toast.dismiss(loadingToast);
+      console.error("Error generating tutorial:", error);
+      toast.error("予期しないエラーが発生しました", { duration: 5000 });
+    } finally {
+      setIsGeneratingTutorial(false);
+    }
   };
 
   const handleStartFromScratch = () => {
     setIsFromScratch(true);
-    setSelectedStyleId(null);
+    setSelectedStyle(null);
     setCurrentStyle({
       id: "custom",
       name: "カスタムスタイル",
@@ -153,6 +253,18 @@ export default function CustomizePage() {
       tools: [],
     });
   };
+
+  // If no style loaded yet, show loading
+  if (!currentStyle) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-card to-background flex items-center justify-center">
+        <div className="text-center">
+          <Sparkles className="w-12 h-12 mx-auto mb-4 animate-pulse text-primary" />
+          <p className="text-muted-foreground">読み込み中...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-card to-background">
@@ -199,11 +311,14 @@ export default function CustomizePage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <img
-                  src={currentStyle.imageUrl || "/placeholder.svg"}
-                  alt={currentStyle.name}
-                  className="w-full h-64 object-cover rounded-lg mb-4"
-                />
+                <div className="relative w-full h-64 mb-4">
+                  <Image
+                    src={currentStyle.imageUrl || "/placeholder.svg"}
+                    alt={currentStyle.name}
+                    fill
+                    className="object-cover rounded-lg"
+                  />
+                </div>
                 <p className="text-muted-foreground mb-4">
                   {truncateDescription(currentStyle.description, 50)}
                 </p>
@@ -286,8 +401,20 @@ export default function CustomizePage() {
             {/* Confirm Button */}
             <Card>
               <CardContent className="pt-6">
-                <Button onClick={handleConfirm} size="lg" className="w-full">
-                  これで決まり
+                <Button
+                  onClick={handleConfirm}
+                  size="lg"
+                  className="w-full"
+                  disabled={isGeneratingTutorial}
+                >
+                  {isGeneratingTutorial ? (
+                    <>
+                      <Sparkles className="w-4 h-4 mr-2 animate-spin" />
+                      生成中...
+                    </>
+                  ) : (
+                    "これで決まり"
+                  )}
                 </Button>
                 <p className="text-sm text-muted-foreground text-center mt-2">
                   詳細な手順書を作成します（約3分）

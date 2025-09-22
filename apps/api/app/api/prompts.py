@@ -33,6 +33,35 @@ Keep the facial features and identity unchanged, only modify the hairstyle and m
 Provide a brief description of the style and steps to achieve this look and you must generate the image.
 """
 
+TRANSLATE_CUSTOM_REQUEST_PROMPT = """\
+Translate the following Japanese text to English:
+```
+$CUSTOM_REQUEST
+```
+
+Please include only the English translation result, and do not include anything unnecessary.
+"""
+
+STYLE_CUSTOMIZE_PROMPT = """\
+You are provided with two images:
+1. The original user photo (first image)
+2. A reference style image (second image)
+
+Generate a new realistic image that combines elements from both:
+- Use the facial features and identity from the FIRST image (original photo)
+- Apply the style, makeup, and hairstyle inspired by the SECOND image (reference style)
+- Incorporate the following custom request: $CUSTOM_REQUEST
+
+Create a natural-looking result that:
+- Preserves the person's identity from the original photo
+- Adapts the style from the reference image to suit their features
+- Incorporates the user's custom preferences
+- Maintains a realistic and professional appearance
+- Change nothing but the user's custom request; maintain the style of the second image.
+
+Provide a brief description of the final style and you must generate the image.
+"""
+
 GENERATE_TUTORIAL_STRUCTURE_PROMPT = """\
 以下のスタイルを実現するための、詳細な段階別メイクアップとヘアスタイリングのチュートリアルを作成してください。
 

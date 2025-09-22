@@ -117,11 +117,15 @@ class TutorialGenerationService:
 
                 # For the final step, use the provided style image instead of generating
                 if is_final_step and final_style_image_url:
-                    logger.info(f"Using provided style image for final step {step_number}")
+                    logger.info(
+                        f"Using provided style image for final step {step_number}"
+                    )
                     # Use the provided final style image URL directly
                     image_url = final_style_image_url
                     # No need to save to GCS as it's already hosted
-                    completion_image = final_style_image if final_style_image else previous_image
+                    completion_image = (
+                        final_style_image if final_style_image else previous_image
+                    )
                 else:
                     # Generate completion image for this step
                     completion_image = await self._generate_step_completion_image(
@@ -133,7 +137,9 @@ class TutorialGenerationService:
                     )
 
                     # Save completion image to GCS
-                    image_gcs_path = f"tutorials/{tutorial_id}/step_{step_number}/image.jpg"
+                    image_gcs_path = (
+                        f"tutorials/{tutorial_id}/step_{step_number}/image.jpg"
+                    )
                     image_url = await self._save_image_to_gcs(
                         completion_image, image_gcs_path
                     )

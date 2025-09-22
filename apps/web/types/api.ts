@@ -68,17 +68,14 @@ export interface StyleDetailResponse {
 
 // Custom style generation request
 export interface GenerateCustomStyleRequest {
-  styleId?: string;
-  customRequest: string;
-  isFromScratch?: boolean;
+  originalImageUrl: string; // Original uploaded user photo URL
+  styleImageUrl: string; // Selected style image URL
+  customRequest: string; // Customization request text
 }
 
 // Custom style generation response
-export interface GenerateCustomStyleResponse {
-  style: Style & {
-    steps?: string[];
-    tools?: string[];
-  };
+export interface GenerateCustomStyleResponse extends Style {
+  // Customized style returns a single Style object directly
 }
 
 // Error response

@@ -77,3 +77,39 @@ class StyleGenerationService:
             generated_styles.append(generated_style)
 
         return generated_styles, original_image_url
+
+    async def customize_style(
+        self,
+        original_image_url: str,
+        style_image_url: str,
+        custom_request: str,
+    ) -> Tuple[GeneratedStyle, Optional[str]]:
+        """
+        Generate a customized style using two images and custom request.
+
+        Args:
+            original_image_url: URL of the original user photo
+            style_image_url: URL of the reference style image
+            custom_request: Custom style request text
+
+        Returns:
+            Tuple of (Generated customized style, Original image URL)
+        """
+        # Use the image generation service to create customized style
+        style_generation = await self.image_service.generate_customized_style(
+            original_image_url=original_image_url,
+            style_image_url=style_image_url,
+            custom_request=custom_request,
+        )
+
+        # Convert StyleGeneration to GeneratedStyle response model
+        generated_style = GeneratedStyle(
+            id=style_generation.id,
+            title=style_generation.title,
+            description=style_generation.description,
+            rawDescription=style_generation.raw_description,  # Using alias
+            imageUrl=style_generation.image_url,  # Using alias
+        )
+
+        # Return the customized style and the original image URL
+        return generated_style, original_image_url
