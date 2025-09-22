@@ -164,8 +164,8 @@ def generate_video_with_retry(
         try:
             # 動画生成を試行
             operation = client.models.generate_videos(
-                # model="veo-3.0-generate-001",
-                model="veo-3.0-fast-generate-001",
+                model="veo-3.0-generate-001",
+                # model="veo-3.0-fast-generate-001",
                 # model="veo-2.0-generate-001",
                 prompt=prompt,
                 image=image,
