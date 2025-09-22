@@ -201,9 +201,6 @@ export default function WelcomePage() {
           <p className="text-xl text-muted-foreground mb-2">
             あなたに最適なメイクアップを提案します
           </p>
-          <p className="text-lg text-foreground max-w-2xl mx-auto">
-            AIがあなたの顔写真を分析し、パーソナライズされたメイクアップとヘアスタイルを提案します
-          </p>
         </div>
 
         {/* Features */}
@@ -249,9 +246,6 @@ export default function WelcomePage() {
         <Card className="max-w-2xl mx-auto">
           <CardHeader>
             <CardTitle className="text-2xl text-center">始めましょう</CardTitle>
-            <CardDescription className="text-center">
-              性別を選択して、あなたの写真をアップロードしてください
-            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-8">
             {/* Gender Selection */}

@@ -91,6 +91,11 @@ class TutorialGenerationRequest(BaseModel):
         description="Optional customization text for the tutorial",
         alias="customization",  # Accept camelCase from frontend
     )
+    final_style_image_url: Optional[str] = Field(
+        None,
+        description="URL of the final style image",
+        alias="finalStyleImageUrl",  # Accept camelCase from frontend
+    )
 
 
 # Alias for consistency with API naming

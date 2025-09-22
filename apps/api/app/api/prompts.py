@@ -58,8 +58,13 @@ $COMPLEMENT
 """
 
 TUTORIAL_STEP_IMAGE_GENERATION_PROMPT = """\
-Generate completed face image with these changes to the provided face image.
+Generate completed face image with these changes to the provided face images.
+When two images are provided:
+- The first image is the previous step's result
+- The second image is the final target style
+Create a natural progression from the previous step towards the final style with the only following description. (Do not change other than the following description.)
 $STEP_TITLE_EN: $STEP_DESCRIPTION_EN
+Ensure the changes are appropriate for this specific step while maintaining consistency with the overall transformation.
 """
 
 TUTORIAL_STEP_VIDEO_GENERATION_PROMPT = """\

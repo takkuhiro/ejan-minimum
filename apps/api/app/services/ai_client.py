@@ -72,13 +72,15 @@ class AIClient:
         model: str,
         prompt: str,
         image: Optional[Image.Image] = None,
+        images: Optional[List[Image.Image]] = None,
     ) -> Any:
         """Generate content using specified model.
 
         Args:
             model: Model name to use.
             prompt: Text prompt for generation.
-            image: Optional PIL Image for multimodal generation.
+            image: Optional single PIL Image for multimodal generation.
+            images: Optional list of PIL Images for multimodal generation.
 
         Returns:
             Response from the API.
@@ -88,7 +90,12 @@ class AIClient:
         """
         try:
             contents: List[Union[str, Image.Image]] = [prompt]
-            if image is not None:
+
+            # Handle multiple images if provided
+            if images is not None:
+                contents.extend(images)
+            # Handle single image if provided
+            elif image is not None:
                 contents.append(image)
 
             response = self.client.models.generate_content(
@@ -103,6 +110,7 @@ class AIClient:
         model: str,
         prompt: str,
         image: Optional[Image.Image] = None,
+        images: Optional[List[Image.Image]] = None,
         max_retries: int = 3,
         delay: float = 1.0,
         **kwargs: Any,
@@ -112,7 +120,8 @@ class AIClient:
         Args:
             model: Model name to use.
             prompt: Text prompt for generation.
-            image: Optional PIL Image for multimodal generation.
+            image: Optional single PIL Image for multimodal generation.
+            images: Optional list of PIL Images for multimodal generation.
             max_retries: Maximum number of retry attempts.
             delay: Initial delay between retries in seconds.
             **kwargs: Additional parameters for the API call.
@@ -127,7 +136,7 @@ class AIClient:
 
         for attempt in range(max_retries):
             try:
-                return self.generate_content(model, prompt, image)
+                return self.generate_content(model, prompt, image, images)
             except AIClientAPIError as e:
                 last_error = e
                 if attempt < max_retries - 1:

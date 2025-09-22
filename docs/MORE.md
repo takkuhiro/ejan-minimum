@@ -7,8 +7,6 @@
     - 何分くらい処理にかかるかの目安を表示する
 - スタイルページのUI
     - 戻るボタンを見やすく
-- GCSのパスについて、アップロード画像はuploadsに入れるようにする
-- GCSからstatus.jsonを取得するのに失敗してたから修正する
 - apps/functionsはデモデータでデプロイしたから元に戻す
 
 nano banana, veo3って複数画像対応？->nano bananaは可能

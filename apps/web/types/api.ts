@@ -30,6 +30,7 @@ export interface GenerateTutorialRequest {
   originalImageUrl: string;
   styleId?: string; // Optional for backward compatibility
   customization?: string;
+  finalStyleImageUrl?: string; // URL of the final style image
 }
 
 // Tutorial step

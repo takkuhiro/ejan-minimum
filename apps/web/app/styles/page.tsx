@@ -158,6 +158,7 @@ export default function StyleSelectionPage() {
         rawDescription: rawDescription,
         originalImageUrl: originalImageUrl,
         styleId: selectedStyle.id, // Optional field for backward compatibility
+        finalStyleImageUrl: selectedStyle.imageUrl, // Add the final style image URL
         ...(customizationText && { customization: customizationText }),
       };
 
