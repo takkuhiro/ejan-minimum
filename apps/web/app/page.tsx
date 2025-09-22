@@ -24,11 +24,12 @@ import {
   retryWithBackoff,
 } from "@/lib/api/error-handler";
 import { toast } from "sonner";
-import type { Gender } from "@/types/api";
+import type { Gender, ApplicationScope } from "@/types/api";
 
 export default function WelcomePage() {
   const router = useRouter();
   const [selectedGender, setSelectedGender] = useState<string>("");
+  const [selectedScope, setSelectedScope] = useState<string>("");
   const [uploadedPhoto, setUploadedPhoto] = useState<File | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -55,7 +56,7 @@ export default function WelcomePage() {
   };
 
   const handleStartGeneration = async () => {
-    if (!selectedGender || !uploadedPhoto) return;
+    if (!selectedGender || !selectedScope || !uploadedPhoto) return;
 
     setIsGenerating(true);
 
@@ -83,6 +84,7 @@ export default function WelcomePage() {
             {
               photo: base64Photo,
               gender: selectedGender as Gender,
+              applicationScope: selectedScope as ApplicationScope,
             },
             {
               maxRetries: 1, // retryWithBackoff will handle additional retries
@@ -201,9 +203,6 @@ export default function WelcomePage() {
           <p className="text-xl text-muted-foreground mb-2">
             あなたに最適なメイクアップを提案します
           </p>
-          <p className="text-lg text-foreground max-w-2xl mx-auto">
-            AIがあなたの顔写真を分析し、パーソナライズされたメイクアップとヘアスタイルを提案します
-          </p>
         </div>
 
         {/* Features */}
@@ -227,7 +226,7 @@ export default function WelcomePage() {
             </CardHeader>
             <CardContent>
               <CardDescription>
-                性別や好みに合わせて、あなただけのメイクアップスタイルをカスタマイズ
+                性別や好みに合わせて、あなただけのスタイルをカスタマイズ
               </CardDescription>
             </CardContent>
           </Card>
@@ -247,12 +246,6 @@ export default function WelcomePage() {
 
         {/* Main Form */}
         <Card className="max-w-2xl mx-auto">
-          <CardHeader>
-            <CardTitle className="text-2xl text-center">始めましょう</CardTitle>
-            <CardDescription className="text-center">
-              性別を選択して、あなたの写真をアップロードしてください
-            </CardDescription>
-          </CardHeader>
           <CardContent className="space-y-8">
             {/* Gender Selection */}
             <div className="space-y-4">
@@ -287,10 +280,43 @@ export default function WelcomePage() {
               </div>
             </div>
 
+            {/* Application Scope Selection */}
+            <div className="space-y-4">
+              <Label className="text-lg font-semibold text-center block">
+                適用範囲を選択してください
+              </Label>
+              <div className="grid grid-cols-3 gap-4">
+                <Button
+                  type="button"
+                  variant={selectedScope === "hair" ? "default" : "outline"}
+                  className="h-20 text-lg font-medium transition-all hover:scale-105 rounded-xl"
+                  onClick={() => setSelectedScope("hair")}
+                >
+                  ヘアスタイルのみ
+                </Button>
+                <Button
+                  type="button"
+                  variant={selectedScope === "makeup" ? "default" : "outline"}
+                  className="h-20 text-lg font-medium transition-all hover:scale-105 rounded-xl"
+                  onClick={() => setSelectedScope("makeup")}
+                >
+                  メイクのみ
+                </Button>
+                <Button
+                  type="button"
+                  variant={selectedScope === "both" ? "default" : "outline"}
+                  className="h-20 text-lg font-medium transition-all hover:scale-105 rounded-xl"
+                  onClick={() => setSelectedScope("both")}
+                >
+                  両方
+                </Button>
+              </div>
+            </div>
+
             {/* Photo Upload */}
             <div className="space-y-4">
-              <Label className="text-lg font-semibold">
-                顔写真をアップロード
+              <Label className="text-lg font-semibold text-center block">
+                顔写真をアップロードしてください
               </Label>
               <PhotoUpload
                 onPhotoUpload={handlePhotoUpload}
@@ -304,7 +330,7 @@ export default function WelcomePage() {
             {/* Generate Button */}
             <Button
               onClick={handleStartGeneration}
-              disabled={!selectedGender || !uploadedPhoto || isGenerating}
+              disabled={!selectedGender || !selectedScope || !uploadedPhoto || isGenerating}
               className="w-full py-6 text-lg"
               size="lg"
             >
@@ -320,6 +346,9 @@ export default function WelcomePage() {
                 </>
               )}
             </Button>
+            <p className="text-sm text-muted-foreground text-center">
+              この処理は約1分かかります
+            </p>
           </CardContent>
         </Card>
       </div>

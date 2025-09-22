@@ -25,7 +25,10 @@ from app.services.tutorial_structure import TutorialStructureService
 from app.services.image_generation import ImageGenerationService
 from app.services.cloud_function_client import CloudFunctionClient
 from app.core.config import settings
-from app.api.prompts import TUTORIAL_STEP_IMAGE_GENERATION_PROMPT, TUTORIAL_STEP_VIDEO_GENERATION_PROMPT
+from app.api.prompts import (
+    TUTORIAL_STEP_IMAGE_GENERATION_PROMPT,
+    TUTORIAL_STEP_VIDEO_GENERATION_PROMPT,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -51,6 +54,7 @@ class TutorialGenerationService:
         original_image_url: str,
         style_id: Optional[str] = None,
         customization_text: Optional[str] = None,
+        final_style_image_url: Optional[str] = None,
     ) -> TutorialResponse:
         """
         Generate a complete tutorial from raw description.
@@ -60,6 +64,7 @@ class TutorialGenerationService:
             original_image_url: URL of the original/base image
             style_id: Optional ID of the selected style (deprecated)
             customization_text: Optional customization text
+            final_style_image_url: Optional URL of the final style image
 
         Returns:
             TutorialResponse with all steps, images, and videos
@@ -81,6 +86,18 @@ class TutorialGenerationService:
             # 2. Download original image
             original_image = await self._download_image(original_image_url)
 
+            # 2.5. Download final style image if provided
+            final_style_image = None
+            if final_style_image_url:
+                try:
+                    final_style_image = await self._download_image(
+                        final_style_image_url
+                    )
+                    logger.info("Successfully downloaded final style image")
+                except Exception as e:
+                    logger.warning(f"Failed to download final style image: {e}")
+                    # Continue without final style image
+
             # 3. Save original image to GCS
             original_gcs_path = f"tutorials/{tutorial_id}/original.jpg"
             await self._save_image_to_gcs(original_image, original_gcs_path)
@@ -95,19 +112,37 @@ class TutorialGenerationService:
                 step_number = i + 1
                 logger.info(f"Processing step {step_number}: {step_data.title}")
 
-                # Generate completion image for this step
-                completion_image = await self._generate_step_completion_image(
-                    previous_image=previous_image,
-                    step_title_en=step_data.title_en,
-                    step_description_en=step_data.description_en,
-                    step_number=step_number,
-                )
+                # Check if this is the final step
+                is_final_step = step_number == len(structured_tutorial.steps)
 
-                # Save completion image to GCS
-                image_gcs_path = f"tutorials/{tutorial_id}/step_{step_number}/image.jpg"
-                image_url = await self._save_image_to_gcs(
-                    completion_image, image_gcs_path
-                )
+                # For the final step, use the provided style image instead of generating
+                if is_final_step and final_style_image_url:
+                    logger.info(
+                        f"Using provided style image for final step {step_number}"
+                    )
+                    # Use the provided final style image URL directly
+                    image_url = final_style_image_url
+                    # No need to save to GCS as it's already hosted
+                    completion_image = (
+                        final_style_image if final_style_image else previous_image
+                    )
+                else:
+                    # Generate completion image for this step
+                    completion_image = await self._generate_step_completion_image(
+                        previous_image=previous_image,
+                        step_title_en=step_data.title_en,
+                        step_description_en=step_data.description_en,
+                        step_number=step_number,
+                        final_style_image=final_style_image,
+                    )
+
+                    # Save completion image to GCS
+                    image_gcs_path = (
+                        f"tutorials/{tutorial_id}/step_{step_number}/image.jpg"
+                    )
+                    image_url = await self._save_image_to_gcs(
+                        completion_image, image_gcs_path
+                    )
 
                 # Prepare video path (video will be generated later)
                 video_gcs_path = f"tutorials/{tutorial_id}/step_{step_number}/video.mp4"
@@ -117,7 +152,9 @@ class TutorialGenerationService:
                 # Start video generation (async, will complete in background)
                 # Use the previous step's image URL (or original for step 1)
 
-                instruction_text = TUTORIAL_STEP_VIDEO_GENERATION_PROMPT.replace("$TITLE_EN", step_data.title_en).replace("$DESCRIPTION_EN", step_data.description_en)
+                instruction_text = TUTORIAL_STEP_VIDEO_GENERATION_PROMPT.replace(
+                    "$TITLE_EN", step_data.title_en
+                ).replace("$DESCRIPTION_EN", step_data.description_en)
                 asyncio.create_task(
                     self._generate_step_video_async(
                         image_url=previous_image_url,
@@ -134,6 +171,7 @@ class TutorialGenerationService:
                     "title": step_data.title,
                     "description": step_data.description,
                     "tools": step_data.tools_needed,
+                    "image_url": image_url,  # 画像URLを保存
                     "created_at": datetime.now().isoformat(),
                 }
                 step_metadata_path = (
@@ -235,16 +273,31 @@ class TutorialGenerationService:
         step_title_en: str,
         step_description_en: str,
         step_number: int,
+        final_style_image: Optional[Image.Image] = None,
     ) -> Image.Image:
         """Generate completion image for a step using previous image and description."""
         try:
-            image_prompt = TUTORIAL_STEP_IMAGE_GENERATION_PROMPT.replace("$STEP_TITLE_EN", step_title_en).replace("$STEP_DESCRIPTION_EN", step_description_en)
-            # Use image generation service with previous image
-            response = self.ai_client.generate_content(
-                model="gemini-2.5-flash-image-preview",
-                prompt=image_prompt,
-                image=previous_image,
-            )
+            # Prepare the prompt with consideration for final style if available
+            if final_style_image:
+                image_prompt = TUTORIAL_STEP_IMAGE_GENERATION_PROMPT.replace(
+                    "$STEP_TITLE_EN", step_title_en
+                ).replace("$STEP_DESCRIPTION_EN", step_description_en)
+                # Use both previous and final style images
+                response = self.ai_client.generate_content(
+                    model="gemini-2.5-flash-image-preview",
+                    prompt=image_prompt,
+                    images=[previous_image, final_style_image],  # Pass both images
+                )
+            else:
+                # Fallback to original prompt without final style
+                image_prompt = TUTORIAL_STEP_IMAGE_GENERATION_PROMPT.replace(
+                    "$STEP_TITLE_EN", step_title_en
+                ).replace("$STEP_DESCRIPTION_EN", step_description_en)
+                response = self.ai_client.generate_content(
+                    model="gemini-2.5-flash-image-preview",
+                    prompt=image_prompt,
+                    image=previous_image,
+                )
 
             # Extract generated image
             image_data = self.ai_client.extract_image_from_response(response)
@@ -379,6 +432,14 @@ class TutorialGenerationService:
                 if step_metadata_blob.exists():
                     step_metadata_json = step_metadata_blob.download_as_text()
                     step_data = json.loads(step_metadata_json)
+
+                    # メタデータからimage_urlを取得、なければフォールバック
+                    metadata_image_url = step_data.get("image_url")
+                    if metadata_image_url:
+                        image_url = metadata_image_url
+                    elif not image_url and image_blob.exists():
+                        # フォールバック: blobが存在する場合はURLを生成
+                        image_url = f"https://storage.googleapis.com/{settings.storage_bucket}/{image_path}"
 
                     step = TutorialStep(
                         step_number=step_num,

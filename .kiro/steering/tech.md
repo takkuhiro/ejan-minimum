@@ -174,7 +174,7 @@ terraform destroy  # Tear down resources
 ### Backend/Functions (.env)
 ```env
 GOOGLE_API_KEY=<Gemini API key>
-GOOGLE_CLOUD_PROJECT=<GCP project ID>
+PROJECT_ID=<GCP project ID>
 STORAGE_BUCKET=<GCS bucket name>
 ```
 

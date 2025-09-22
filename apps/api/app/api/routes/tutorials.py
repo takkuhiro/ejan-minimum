@@ -49,6 +49,7 @@ async def generate_tutorial(request: TutorialGenerationRequest) -> TutorialRespo
             original_image_url=request.original_image_url,
             style_id=request.style_id,
             customization_text=request.customization_text,
+            final_style_image_url=request.final_style_image_url,
         )
 
         return tutorial

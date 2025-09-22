@@ -13,7 +13,7 @@ def test_config_loads_environment_variables():
         os.environ,
         {
             "GOOGLE_API_KEY": "test-key-123",
-            "GOOGLE_CLOUD_PROJECT": "test-project-456",
+            "PROJECT_ID": "test-project-456",
             "STORAGE_BUCKET": "test-bucket-789",
             "ENV": "development",
         },
@@ -34,7 +34,7 @@ def test_config_has_default_values():
     with patch.dict(os.environ, clear=True):
         # Only set required env vars
         os.environ["GOOGLE_API_KEY"] = "key"
-        os.environ["GOOGLE_CLOUD_PROJECT"] = "project"
+        os.environ["PROJECT_ID"] = "project"
         os.environ["STORAGE_BUCKET"] = "bucket"
 
         from app.core.config import Settings
@@ -51,7 +51,7 @@ def test_config_cors_origins_parsing():
         os.environ,
         {
             "GOOGLE_API_KEY": "key",
-            "GOOGLE_CLOUD_PROJECT": "project",
+            "PROJECT_ID": "project",
             "STORAGE_BUCKET": "bucket",
             "CORS_ORIGINS": "http://localhost:3000,http://localhost:3001",
         },
@@ -88,7 +88,7 @@ def test_config_singleton_pattern():
         os.environ,
         {
             "GOOGLE_API_KEY": "key",
-            "GOOGLE_CLOUD_PROJECT": "project",
+            "PROJECT_ID": "project",
             "STORAGE_BUCKET": "bucket",
         },
     ):

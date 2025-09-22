@@ -79,7 +79,7 @@ module "functions" {
   google_api_key        = var.google_api_key
   storage_bucket_name   = module.storage.bucket_name
   service_account_email = module.iam.service_account_email
-  force_destroy         = true  # Allow destruction in dev environment
+  force_destroy         = true # Allow destruction in dev environment
 
   depends_on = [
     google_project_service.required_apis,

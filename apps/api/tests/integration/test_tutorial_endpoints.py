@@ -41,8 +41,11 @@ def mock_tutorial_service():
 def sample_tutorial_request() -> Dict[str, Any]:
     """Sample tutorial generation request data."""
     return {
-        "style_id": "style_123",
-        "customization_text": "Add more focus on eye makeup",
+        "rawDescription": "Natural and fresh makeup style",  # Using alias
+        "originalImageUrl": "https://example.com/original.jpg",  # Using alias
+        "styleId": "style_123",  # Using alias
+        "customization": "Add more focus on eye makeup",  # Using alias
+        "finalStyleImageUrl": "https://example.com/style.jpg",  # Using alias (optional)
     }
 
 

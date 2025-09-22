@@ -21,6 +21,14 @@ class Gender(str, Enum):
     NEUTRAL = "neutral"
 
 
+class ApplicationScope(str, Enum):
+    """Application scope options for style generation."""
+
+    HAIR = "hair"
+    MAKEUP = "makeup"
+    BOTH = "both"
+
+
 class PhotoUploadRequest(BaseModel):
     """Request model for photo upload and style generation."""
 
@@ -39,6 +47,11 @@ class PhotoUploadRequest(BaseModel):
     gender: Gender = Field(
         ...,
         description="Gender selection for style generation",
+    )
+    application_scope: ApplicationScope = Field(
+        ...,
+        description="Application scope for style generation (hair, makeup, or both)",
+        alias="applicationScope",  # Accept camelCase from frontend
     )
 
     @field_validator("photo")
@@ -90,6 +103,32 @@ class TutorialGenerationRequest(BaseModel):
         max_length=1000,
         description="Optional customization text for the tutorial",
         alias="customization",  # Accept camelCase from frontend
+    )
+    final_style_image_url: Optional[str] = Field(
+        None,
+        description="URL of the final style image",
+        alias="finalStyleImageUrl",  # Accept camelCase from frontend
+    )
+
+
+class CustomizeStyleRequest(BaseModel):
+    """Request model for style customization using two images."""
+
+    original_image_url: str = Field(
+        ...,
+        description="URL of the original uploaded user photo",
+        alias="originalImageUrl",  # Accept camelCase from frontend
+    )
+    style_image_url: str = Field(
+        ...,
+        description="URL of the selected style image",
+        alias="styleImageUrl",  # Accept camelCase from frontend
+    )
+    custom_request: str = Field(
+        ...,
+        max_length=1000,
+        description="Custom style request text from user",
+        alias="customRequest",  # Accept camelCase from frontend
     )
 
 

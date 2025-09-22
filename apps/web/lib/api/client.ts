@@ -11,6 +11,7 @@ import {
   GenerateCustomStyleRequest,
   GenerateCustomStyleResponse,
 } from "@/types/api";
+import { convertKeysToCamelCase } from "@/lib/utils";
 
 export interface ApiClientConfig {
   baseUrl?: string;
@@ -51,11 +52,6 @@ export class ApiClient {
 
     if (this.apiKey) {
       headers["X-API-Key"] = this.apiKey;
-    }
-
-    console.log(`API Request: ${fetchOptions.method || "GET"} ${url}`);
-    if (fetchOptions.body) {
-      console.log("Request body:", fetchOptions.body);
     }
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -105,9 +101,11 @@ export class ApiClient {
 
         const data = await response.json();
         console.log("API Success response:", data);
+        // Convert snake_case keys to camelCase
+        const convertedData = convertKeysToCamelCase<T>(data);
         return {
           success: true,
-          data: data as T,
+          data: convertedData,
         };
       } catch (error) {
         console.error(

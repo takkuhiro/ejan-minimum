@@ -48,24 +48,23 @@ resource "google_cloudfunctions2_function" "video_generation" {
   }
 
   service_config {
-    max_instance_count    = 10
-    min_instance_count    = 0
-    available_memory      = "4Gi"
-    timeout_seconds       = 540
+    max_instance_count               = 10
+    min_instance_count               = 0
+    available_memory                 = "4Gi"
+    timeout_seconds                  = 540
     max_instance_request_concurrency = 1
-    available_cpu         = "2"
+    available_cpu                    = "2"
 
     environment_variables = {
-      GOOGLE_API_KEY   = var.google_api_key
-      STORAGE_BUCKET   = google_storage_bucket.media_storage.name
+      GOOGLE_API_KEY = var.google_api_key
+      STORAGE_BUCKET = google_storage_bucket.media_storage.name
     }
 
-    service_account_email = google_service_account.ejan_dev_sa.email
+    service_account_email = data.google_service_account.ejan_minimum_dev_sa.email
   }
 
   depends_on = [
-    google_storage_bucket_object.video_generation_source,
-    google_service_account.ejan_dev_sa
+    google_storage_bucket_object.video_generation_source
   ]
 }
 

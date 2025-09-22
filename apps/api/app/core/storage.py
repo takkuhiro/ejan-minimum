@@ -29,9 +29,10 @@ class StorageClient:
             raise ValueError("STORAGE_BUCKET environment variable is required")
 
         # Initialize the Google Cloud Storage client
-        # It will use GOOGLE_APPLICATION_CREDENTIALS or default credentials
-        # Service account: ejan-minimum-dev-sa
-        self.client = storage.Client()
+        # Cloud Run: Uses service account attached to the service (ejan-minimum-dev-sa)
+        # Local: Uses Application Default Credentials
+        # Explicitly set project ID to avoid issues with credential detection
+        self.client = storage.Client(project=settings.google_cloud_project)
 
     def get_bucket(self) -> Bucket:  # type: ignore[no-any-unimported]
         """Get the configured bucket instance.

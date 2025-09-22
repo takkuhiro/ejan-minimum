@@ -7,13 +7,20 @@ from typing import List, Optional
 from dataclasses import dataclass
 from io import BytesIO
 import time
+import httpx
 
 from PIL import Image
 from pydantic import BaseModel, Field
 
 from app.services.ai_client import AIClient, AIClientAPIError
 from app.services.storage import StorageService
-from app.api.prompts import STYLE_INFO_GENERATION_PROMPT, STYLE_VARIATIONS, STYLE_IMAGE_GENERATION_PROMPT
+from app.api.prompts import (
+    STYLE_INFO_GENERATION_PROMPT,
+    STYLE_VARIATIONS,
+    STYLE_IMAGE_GENERATION_PROMPT,
+    STYLE_CUSTOMIZE_PROMPT,
+    TRANSLATE_CUSTOM_REQUEST_PROMPT,
+)
 
 
 class Gender(str, Enum):
@@ -22,6 +29,14 @@ class Gender(str, Enum):
     MALE = "male"
     FEMALE = "female"
     NEUTRAL = "neutral"
+
+
+class ApplicationScope(str, Enum):
+    """Application scope options for style generation."""
+
+    HAIR = "hair"
+    MAKEUP = "makeup"
+    BOTH = "both"
 
 
 class ImageGenerationError(Exception):
@@ -53,20 +68,24 @@ class JapaneseStyleInfo(BaseModel):
 
 
 def generate_style_prompt(
-    gender: Gender, style_index: int, custom_text: Optional[str] = None
+    gender: Gender,
+    style_index: int,
+    application_scope: ApplicationScope,
+    custom_text: Optional[str] = None,
 ) -> str:
     """Generate prompt for style creation.
 
     Args:
         gender: Gender for style generation.
         style_index: Index of style variation (0-2).
+        application_scope: Application scope (hair, makeup, or both).
         custom_text: Optional custom request text.
 
     Returns:
         Generated prompt string.
     """
-    # Ensure style_index is within bounds
-    key = f"{gender.value}{style_index}"
+    # Generate key with application scope
+    key = f"{gender.value}{style_index}_{application_scope.value}"
     style_variation = STYLE_VARIATIONS[key]
 
     # Gender-specific language
@@ -76,7 +95,9 @@ def generate_style_prompt(
         Gender.NEUTRAL: "gender-neutral/unisex",
     }[gender]
 
-    base_prompt = STYLE_IMAGE_GENERATION_PROMPT.replace("$GENDER_TEXT", gender_text).replace("$STYLE_VARIATION", style_variation)
+    base_prompt = STYLE_IMAGE_GENERATION_PROMPT.replace(
+        "$GENDER_TEXT", gender_text
+    ).replace("$STYLE_VARIATION", style_variation)
 
     if custom_text:
         base_prompt += f"\n\nAdditional request: {custom_text}"
@@ -97,13 +118,14 @@ class ImageGenerationService:
         self.ai_client = ai_client
         self.storage_service = storage_service
         self.model_name = "gemini-2.5-flash-image-preview"
-        self.sub_model_name = "gemini-2.0-flash-lite"
+        self.sub_model_name = "gemini-2.5-flash-lite"
 
     async def generate_single_style(
         self,
         image: Image.Image,
         gender: Gender,
         style_index: int,
+        application_scope: ApplicationScope,
         custom_text: Optional[str] = None,
     ) -> StyleGeneration:
         """Generate a single style for the given image.
@@ -112,6 +134,7 @@ class ImageGenerationService:
             image: Input face PIL Image.
             gender: Gender for style generation.
             style_index: Index of style variation (0-2).
+            application_scope: Application scope (hair, makeup, or both).
             custom_text: Optional custom request text.
 
         Returns:
@@ -127,7 +150,7 @@ class ImageGenerationService:
         while retry_count < max_retries:
             try:
                 # Generate prompt
-                prompt = generate_style_prompt(gender, style_index, custom_text)
+                prompt = generate_style_prompt(gender, style_index, application_scope, custom_text)
 
                 # Call AI API
                 response = self.ai_client.generate_content(
@@ -144,7 +167,9 @@ class ImageGenerationService:
 
                 # Generate Japanese title and description using sub model
                 try:
-                    prompt = STYLE_INFO_GENERATION_PROMPT.replace("$RAW_DESCRIPTION", raw_description)
+                    prompt = STYLE_INFO_GENERATION_PROMPT.replace(
+                        "$RAW_DESCRIPTION", raw_description
+                    )
                     japanese_response = self.ai_client.client.models.generate_content(
                         model=self.sub_model_name,
                         contents=prompt,
@@ -230,13 +255,18 @@ class ImageGenerationService:
         raise ImageGenerationError("Failed to generate style after all retries")
 
     async def generate_three_styles(
-        self, image: Image.Image, gender: Gender, custom_text: Optional[str] = None
+        self,
+        image: Image.Image,
+        gender: Gender,
+        application_scope: ApplicationScope,
+        custom_text: Optional[str] = None,
     ) -> List[StyleGeneration]:
         """Generate three different styles for the given image.
 
         Args:
             image: Input face PIL Image.
             gender: Gender for style generation.
+            application_scope: Application scope (hair, makeup, or both).
             custom_text: Optional custom request text.
 
         Returns:
@@ -251,7 +281,11 @@ class ImageGenerationService:
         for i in range(3):
             try:
                 style = await self.generate_single_style(
-                    image=image, gender=gender, style_index=i, custom_text=custom_text
+                    image=image,
+                    gender=gender,
+                    style_index=i,
+                    application_scope=application_scope,
+                    custom_text=custom_text,
                 )
                 styles.append(style)
             except ImageGenerationError as e:
@@ -273,13 +307,18 @@ class ImageGenerationService:
         raise ImageGenerationError(error_msg)
 
     async def process_upload_and_generate(
-        self, base64_photo: str, gender: Gender, custom_text: Optional[str] = None
+        self,
+        base64_photo: str,
+        gender: Gender,
+        application_scope: Optional[ApplicationScope] = None,
+        custom_text: Optional[str] = None,
     ) -> List[StyleGeneration]:
         """Process uploaded photo and generate styles.
 
         Args:
             base64_photo: Base64 encoded photo.
             gender: Gender for style generation.
+            application_scope: Optional application scope (defaults to BOTH).
             custom_text: Optional custom request text.
 
         Returns:
@@ -304,8 +343,12 @@ class ImageGenerationService:
         except Exception as e:
             raise ImageGenerationError(f"Failed to open image: {e}")
 
+        # Use default application scope if not provided
+        if application_scope is None:
+            application_scope = ApplicationScope.BOTH
+
         # Generate styles
-        return await self.generate_three_styles(image, gender, custom_text)
+        return await self.generate_three_styles(image, gender, application_scope, custom_text)
 
     def validate_image_size(self, image_data: bytes, max_size_mb: int = 10) -> bool:
         """Validate image size is within limit.
@@ -345,3 +388,168 @@ class ImageGenerationService:
                 return first_line
 
         return "Style"
+
+    async def download_image_from_url(self, image_url: str) -> Image.Image:
+        """Download image from URL and return as PIL Image.
+
+        Args:
+            image_url: URL of the image to download.
+
+        Returns:
+            PIL Image object.
+
+        Raises:
+            ImageGenerationError: If download or processing fails.
+        """
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(image_url, timeout=30)
+                response.raise_for_status()
+                image_data = response.content
+
+            # Validate size (10MB limit)
+            if not self.validate_image_size(image_data):
+                raise ImageGenerationError("Downloaded image exceeds 10MB limit")
+
+            # Create PIL Image
+            image = Image.open(BytesIO(image_data))
+            return image
+
+        except httpx.HTTPError as e:
+            raise ImageGenerationError(f"Failed to download image: {e}")
+        except Exception as e:
+            raise ImageGenerationError(f"Failed to process downloaded image: {e}")
+
+    async def generate_customized_style(
+        self,
+        original_image_url: str,
+        style_image_url: str,
+        custom_request: str,
+    ) -> StyleGeneration:
+        """Generate a customized style using two input images.
+
+        Args:
+            original_image_url: URL of the original user photo.
+            style_image_url: URL of the reference style image.
+            custom_request: Custom style request text.
+
+        Returns:
+            Generated customized style.
+
+        Raises:
+            ImageGenerationError: If generation fails.
+        """
+        # Download both images
+        try:
+            original_image = await self.download_image_from_url(original_image_url)
+            style_image = await self.download_image_from_url(style_image_url)
+        except Exception as e:
+            raise ImageGenerationError(f"Failed to download images: {e}")
+
+        max_retries = 3
+        retry_count = 0
+        base_sleep_time = 2
+
+        while retry_count < max_retries:
+            try:
+                # Geminiで日本語のcustom_requestを英語に翻訳する
+                translate_prompt = TRANSLATE_CUSTOM_REQUEST_PROMPT.replace(
+                    "$CUSTOM_REQUEST", custom_request
+                )
+                translate_response = self.ai_client.generate_content(
+                    model=self.sub_model_name,
+                    prompt=translate_prompt,
+                )
+                custom_request_en = translate_response.text
+
+                # Create customized prompt
+                prompt = STYLE_CUSTOMIZE_PROMPT.replace(
+                    "$CUSTOM_REQUEST", custom_request_en
+                )
+
+                # Call AI API with both images
+                response = self.ai_client.generate_content(
+                    model=self.model_name,
+                    prompt=prompt,
+                    image=[original_image, style_image],
+                )
+
+                # Extract raw description
+                raw_description = self.ai_client.extract_text_from_response(response)
+                print(f"Customized style description: {raw_description}")
+                if not raw_description:
+                    raw_description = (
+                        f"Customized style based on user request: {custom_request[:50]}"
+                    )
+
+                # Generate Japanese title and description
+                try:
+                    prompt = STYLE_INFO_GENERATION_PROMPT.replace(
+                        "$RAW_DESCRIPTION", raw_description
+                    )
+                    japanese_response = self.ai_client.client.models.generate_content(
+                        model=self.sub_model_name,
+                        contents=prompt,
+                        config={
+                            "response_mime_type": "application/json",
+                            "response_schema": JapaneseStyleInfo,
+                        },
+                    )
+                    japanese_info: JapaneseStyleInfo = japanese_response.parsed
+                    title = japanese_info.title
+                    description = japanese_info.description
+                    print(f"Japanese title: {title}, description: {description}")
+                except Exception as e:
+                    print(f"Failed to generate Japanese text: {e}")
+                    title = "カスタムスタイル"
+                    description = (
+                        custom_request[:30]
+                        if custom_request
+                        else "カスタマイズされたスタイル"
+                    )
+
+                # Extract generated image
+                image_data = self.ai_client.extract_image_from_response(response)
+                if not image_data:
+                    retry_count += 1
+                    if retry_count < max_retries:
+                        sleep_time = min(base_sleep_time * (2 ** (retry_count - 1)), 20)
+                        print(
+                            f"No image generated, retrying in {sleep_time}s... (attempt {retry_count}/{max_retries})"
+                        )
+                        time.sleep(sleep_time)
+                        continue
+                    else:
+                        raise ImageGenerationError(
+                            f"No image generated after {max_retries} attempts"
+                        )
+
+                # Upload to storage
+                try:
+                    content_type = "image/png"
+                    image_url = self.storage_service.upload_image(
+                        image_data, content_type
+                    )
+
+                    return StyleGeneration(
+                        id=str(uuid.uuid4()),
+                        title=title,
+                        description=description,
+                        raw_description=raw_description,
+                        image_url=image_url,
+                    )
+                except Exception as e:
+                    raise ImageGenerationError(
+                        f"Failed to upload customized image to storage: {e}"
+                    )
+
+            except AIClientAPIError as e:
+                retry_count += 1
+                if retry_count < max_retries:
+                    sleep_time = min(base_sleep_time * (2 ** (retry_count - 1)), 20)
+                    print(
+                        f"API error, retrying in {sleep_time}s... (attempt {retry_count}/{max_retries})"
+                    )
+                    time.sleep(sleep_time)
+                else:
+                    raise ImageGenerationError(f"Failed to customize style: {e}")

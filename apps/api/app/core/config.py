@@ -60,6 +60,11 @@ class Settings(BaseSettings):
         """Check if running in production environment."""
         return self.env == "production"
 
+    @property
+    def project_id(self) -> str:
+        """Get the project ID (alias for google_cloud_project)."""
+        return self.google_cloud_project
+
 
 # Create singleton instance
 # Type ignore because Settings loads from environment variables

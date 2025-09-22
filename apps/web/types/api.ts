@@ -3,10 +3,14 @@
 // Gender type for style generation
 export type Gender = "male" | "female" | "neutral";
 
+// Application scope type for style generation
+export type ApplicationScope = "hair" | "makeup" | "both";
+
 // Style generation request
 export interface GenerateStylesRequest {
   photo: string; // Base64 encoded image
   gender: Gender;
+  applicationScope: ApplicationScope;
 }
 
 // Style response
@@ -30,6 +34,7 @@ export interface GenerateTutorialRequest {
   originalImageUrl: string;
   styleId?: string; // Optional for backward compatibility
   customization?: string;
+  finalStyleImageUrl?: string; // URL of the final style image
 }
 
 // Tutorial step
@@ -67,17 +72,14 @@ export interface StyleDetailResponse {
 
 // Custom style generation request
 export interface GenerateCustomStyleRequest {
-  styleId?: string;
-  customRequest: string;
-  isFromScratch?: boolean;
+  originalImageUrl: string; // Original uploaded user photo URL
+  styleImageUrl: string; // Selected style image URL
+  customRequest: string; // Customization request text
 }
 
 // Custom style generation response
-export interface GenerateCustomStyleResponse {
-  style: Style & {
-    steps?: string[];
-    tools?: string[];
-  };
+export interface GenerateCustomStyleResponse extends Style {
+  // Customized style returns a single Style object directly
 }
 
 // Error response

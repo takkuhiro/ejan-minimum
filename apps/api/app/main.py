@@ -17,10 +17,17 @@ from app.api.routes import styles, tutorials
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO if settings.is_production else logging.DEBUG,
+    level=logging.INFO,  # Always use INFO level
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+# Suppress DEBUG logs from external libraries
+logging.getLogger("google.auth").setLevel(logging.WARNING)
+logging.getLogger("google.auth._default").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("google_genai").setLevel(logging.INFO)
 
 
 @asynccontextmanager
@@ -34,8 +41,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Verify required settings
     if not settings.google_api_key:
         logger.warning("GOOGLE_API_KEY not configured")
-    if not settings.google_cloud_project:
-        logger.warning("GOOGLE_CLOUD_PROJECT not configured")
+    if not settings.project_id:
+        logger.warning("PROJECT_ID not configured")
     if not settings.storage_bucket:
         logger.warning("STORAGE_BUCKET not configured")
 

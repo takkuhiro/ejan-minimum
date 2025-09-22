@@ -37,3 +37,38 @@ export function truncateDescription(
 ): string {
   return truncateText(description, maxLength);
 }
+
+/**
+ * Convert snake_case object keys to camelCase
+ */
+export function snakeToCamelCase(str: string): string {
+  return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+}
+
+/**
+ * Recursively convert all snake_case keys in an object to camelCase
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function convertKeysToCamelCase<T = any>(obj: any): T {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map((item) => convertKeysToCamelCase(item)) as T;
+  }
+
+  if (typeof obj === "object") {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const converted: any = {};
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        const camelKey = snakeToCamelCase(key);
+        converted[camelKey] = convertKeysToCamelCase(obj[key]);
+      }
+    }
+    return converted as T;
+  }
+
+  return obj;
+}
