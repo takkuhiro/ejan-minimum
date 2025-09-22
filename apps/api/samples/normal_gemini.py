@@ -1,6 +1,4 @@
 from google import genai
-from PIL import Image
-from io import BytesIO
 from dotenv import load_dotenv
 from typing import Any
 import os
@@ -26,9 +24,10 @@ def extract_text_from_response(response: Any) -> str:
                     if hasattr(part, "text") and part.text:
                         text_parts.append(part.text)
 
+
 client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 
-prompt = f"""Translate the following Japanese text to English:
+prompt = """Translate the following Japanese text to English:
 ```
 ステップ 1: 目を開ける
 指示: 目を開ける

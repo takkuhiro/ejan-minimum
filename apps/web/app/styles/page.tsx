@@ -142,12 +142,15 @@ export default function StyleSelectionPage() {
     setIsGenerating(true);
     const loadingToast = toast.loading("チュートリアルを生成中...");
 
-    let rawDescription = selectedStyle.description ?? "";
-    if (rawDescription === "") {
-      rawDescription = `${selectedStyle.title}のスタイル。${selectedStyle.description} カスタマイズ要望: ${customizationText}`;
-    }
+    // Use rawDescription from Gemini if available, otherwise fallback to description
+    let rawDescription =
+      selectedStyle.rawDescription || selectedStyle.description || "";
+
+    // If there's customization text, append it to the raw description
     if (customizationText) {
-      rawDescription = `${selectedStyle.title}のスタイル。${selectedStyle.description} カスタマイズ要望: ${customizationText}`;
+      rawDescription = rawDescription
+        ? `${rawDescription} カスタマイズ要望: ${customizationText}`
+        : `カスタマイズ要望: ${customizationText}`;
     }
 
     try {

@@ -17,11 +17,15 @@ echo "========================================"
 echo "Endpoint: ${API_URL}${ENDPOINT}"
 echo ""
 
-# Sample request data
-REQUEST_DATA='{
-  "rawDescription": "ナチュラルメイクのチュートリアル。まず、肌を整えるためにファンデーションを薄く塗ります。次に、アイシャドウをベージュ系で自然に仕上げ、最後にリップグロスで唇に潤いを与えます。全体的に清楚で自然な印象を目指します。",
-  "originalImageUrl": "https://storage.googleapis.com/ejan-minimum-storage-dev/IMG_1206.jpg"
-}'
+# # Sample request data
+# REQUEST_DATA='{
+#   "rawDescription": "ナチュラルメイクのチュートリアル。まず、肌を整えるためにファンデーションを薄く塗ります。次に、アイシャドウをベージュ系で自然に仕上げ、最後にリップグロスで唇に潤いを与えます。全体的に清楚で自然な印象を目指します。",
+#   "originalImageUrl": "https://storage.googleapis.com/ejan-minimum-storage-dev/IMG_1206.jpg"
+# }'
+
+
+REQUEST_DATA='{"rawDescription":"可愛らしい人形風。若々しく、愛らしいスタイル","originalImageUrl":"https://storage.googleapis.com/ejan-minimum-storage-dev/image_20250921_151428_ae872ca6.jpg","styleId":"75776b63-afda-4892-8af2-bac6e759c609"}'
+
 
 echo -e "${GREEN}Request Body:${NC}"
 echo "${REQUEST_DATA}" | jq '.' 2>/dev/null || echo "${REQUEST_DATA}"

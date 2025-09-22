@@ -11,6 +11,7 @@ import {
   GenerateCustomStyleRequest,
   GenerateCustomStyleResponse,
 } from "@/types/api";
+import { convertKeysToCamelCase } from "@/lib/utils";
 
 export interface ApiClientConfig {
   baseUrl?: string;
@@ -105,9 +106,11 @@ export class ApiClient {
 
         const data = await response.json();
         console.log("API Success response:", data);
+        // Convert snake_case keys to camelCase
+        const convertedData = convertKeysToCamelCase<T>(data);
         return {
           success: true,
-          data: data as T,
+          data: convertedData,
         };
       } catch (error) {
         console.error(

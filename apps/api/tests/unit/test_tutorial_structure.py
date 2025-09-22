@@ -73,14 +73,12 @@ class TestDataModels:
             title="Natural Makeup Look",
             description="A fresh and natural makeup style",
             total_duration_minutes=15,
-            difficulty_level="beginner",
             steps=[step],
             required_tools=[tool],
         )
 
         assert procedure.title == "Natural Makeup Look"
         assert procedure.total_duration_minutes == 15
-        assert procedure.difficulty_level == "beginner"
         assert len(procedure.steps) == 1
         assert len(procedure.required_tools) == 1
 
@@ -91,7 +89,6 @@ class TestDataModels:
                 title="Test",
                 description="Test",
                 total_duration_minutes=10,
-                difficulty_level="expert",  # Invalid - should be beginner/intermediate/advanced
                 steps=[],
                 required_tools=[],
             )
@@ -151,7 +148,6 @@ class TestTutorialStructureService:
             "title": "Natural Daytime Look",
             "description": "A fresh and clean makeup style perfect for everyday wear",
             "total_duration_minutes": 15,
-            "difficulty_level": "beginner",
             "steps": [
                 {
                     "step_number": 1,
@@ -290,7 +286,6 @@ class TestTutorialStructureService:
             title="Test",
             description="Test",
             total_duration_minutes=10,
-            difficulty_level="beginner",
             steps=[step],
             required_tools=[],
         )

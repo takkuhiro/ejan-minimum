@@ -13,7 +13,11 @@ from pydantic import BaseModel, Field
 
 from app.services.ai_client import AIClient, AIClientAPIError
 from app.services.storage import StorageService
-from app.api.prompts import STYLE_INFO_GENERATION_PROMPT, STYLE_VARIATIONS, STYLE_IMAGE_GENERATION_PROMPT
+from app.api.prompts import (
+    STYLE_INFO_GENERATION_PROMPT,
+    STYLE_VARIATIONS,
+    STYLE_IMAGE_GENERATION_PROMPT,
+)
 
 
 class Gender(str, Enum):
@@ -76,7 +80,9 @@ def generate_style_prompt(
         Gender.NEUTRAL: "gender-neutral/unisex",
     }[gender]
 
-    base_prompt = STYLE_IMAGE_GENERATION_PROMPT.replace("$GENDER_TEXT", gender_text).replace("$STYLE_VARIATION", style_variation)
+    base_prompt = STYLE_IMAGE_GENERATION_PROMPT.replace(
+        "$GENDER_TEXT", gender_text
+    ).replace("$STYLE_VARIATION", style_variation)
 
     if custom_text:
         base_prompt += f"\n\nAdditional request: {custom_text}"
@@ -144,7 +150,9 @@ class ImageGenerationService:
 
                 # Generate Japanese title and description using sub model
                 try:
-                    prompt = STYLE_INFO_GENERATION_PROMPT.replace("$RAW_DESCRIPTION", raw_description)
+                    prompt = STYLE_INFO_GENERATION_PROMPT.replace(
+                        "$RAW_DESCRIPTION", raw_description
+                    )
                     japanese_response = self.ai_client.client.models.generate_content(
                         model=self.sub_model_name,
                         contents=prompt,

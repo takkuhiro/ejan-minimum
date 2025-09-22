@@ -1,7 +1,7 @@
 """Tutorial structure service using Gemini Structured Output."""
 
 from typing import Dict, List, Any, Optional
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 from app.services.ai_client import AIClient, AIClientAPIError
 from app.api.prompts import GENERATE_TUTORIAL_STRUCTURE_PROMPT
@@ -27,7 +27,9 @@ class MakeupStep(BaseModel):
     title: str = Field(..., min_length=1, description="Title of the step")
     description: str = Field(..., description="Detailed description of the step")
     title_en: str = Field(..., description="Title of the step in English")
-    description_en: str = Field(..., description="Detailed description of the step in Japanese")
+    description_en: str = Field(
+        ..., description="Detailed description of the step in English"
+    )
     duration_seconds: int = Field(default=30, ge=10, description="Duration in seconds")
     tools_needed: List[str] = Field(
         default_factory=list, description="List of tools needed"
@@ -42,18 +44,8 @@ class MakeupProcedure(BaseModel):
     total_duration_minutes: int = Field(
         ..., ge=1, description="Total duration in minutes"
     )
-    difficulty_level: str = Field(..., description="Difficulty level")
     steps: List[MakeupStep] = Field(..., min_length=1, description="List of steps")
     required_tools: List[Tool] = Field(..., description="List of required tools")
-
-    @field_validator("difficulty_level")
-    @classmethod
-    def validate_difficulty(cls, v: str) -> str:
-        """Validate difficulty level."""
-        valid_levels = ["beginner", "intermediate", "advanced"]
-        if v.lower() not in valid_levels:
-            raise ValueError(f"Difficulty must be one of {valid_levels}")
-        return v.lower()
 
 
 def generate_tutorial_prompt(
@@ -71,7 +63,9 @@ def generate_tutorial_prompt(
     Returns:
         Generated prompt string.
     """
-    base_prompt = GENERATE_TUTORIAL_STRUCTURE_PROMPT.replace("$STYLE_DESCRIPTION", style_description)
+    base_prompt = GENERATE_TUTORIAL_STRUCTURE_PROMPT.replace(
+        "$STYLE_DESCRIPTION", style_description
+    )
 
     complement = ""
     if gender:
@@ -100,9 +94,7 @@ class TutorialStructureService:
             ai_client: AI client for Gemini API.
         """
         self.ai_client = ai_client
-        self.model_name = (
-            "gemini-2.5-flash"
-        )
+        self.model_name = "gemini-2.5-flash"
 
     async def generate_tutorial_structure(
         self,
@@ -167,7 +159,6 @@ class TutorialStructureService:
                 "title": {"type": "string"},
                 "description": {"type": "string"},
                 "total_duration_minutes": {"type": "integer"},
-                "difficulty_level": {"type": "string"},
                 "steps": {
                     "type": "array",
                     "items": {
@@ -201,7 +192,6 @@ class TutorialStructureService:
                 "title",
                 "description",
                 "total_duration_minutes",
-                "difficulty_level",
                 "steps",
                 "required_tools",
             ],
@@ -270,12 +260,13 @@ class TutorialStructureService:
             "title": procedure.title,
             "description": procedure.description,
             "total_duration_minutes": procedure.total_duration_minutes,
-            "difficulty_level": procedure.difficulty_level,
             "steps": [
                 {
                     "step_number": step.step_number,
                     "title": step.title,
                     "description": step.description,
+                    "title_en": step.title_en,
+                    "description_en": step.description_en,
                     "duration_seconds": step.duration_seconds,
                     "tools_needed": step.tools_needed,
                 }

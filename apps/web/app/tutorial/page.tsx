@@ -525,6 +525,9 @@ export default function TutorialPage() {
                   ) : (
                     <div className="w-full max-w-md mx-auto aspect-[4/3] bg-muted rounded-lg flex items-center justify-center">
                       <p className="text-muted-foreground">画像を準備中...</p>
+                      <p>
+                        currentStepData.imageUrl: {currentStepData.imageUrl}
+                      </p>
                     </div>
                   )}
                 </div>

@@ -204,6 +204,10 @@ class AIClient:
         Raises:
             AIClientAPIError: If API call fails or response is invalid.
         """
+        import logging
+
+        logger = logging.getLogger(__name__)
+
         try:
             # Use the correct format as shown in the documentation
             response = self.client.models.generate_content(
@@ -218,7 +222,20 @@ class AIClient:
 
             # If response has parsed attribute, use it
             if hasattr(response, "parsed"):
-                return response.parsed
+                parsed_response = response.parsed
+                if parsed_response is None:
+                    # Fall back to text extraction if parsed is None
+                    text_response = self.extract_text_from_response(response)
+                    logger.warning(
+                        f"Parsed response was None, extracting text: {text_response[:200]}..."
+                    )
+                    try:
+                        return json.loads(text_response)  # type: ignore
+                    except json.JSONDecodeError as e:
+                        raise AIClientAPIError(
+                            f"Failed to parse JSON response: {e}, Response: {text_response[:500]}"
+                        )
+                return parsed_response
 
             # Otherwise extract text and parse JSON
             text_response = self.extract_text_from_response(response)
@@ -226,7 +243,9 @@ class AIClient:
             try:
                 return json.loads(text_response)  # type: ignore
             except json.JSONDecodeError as e:
-                raise AIClientAPIError(f"Failed to parse JSON response: {e}")
+                raise AIClientAPIError(
+                    f"Failed to parse JSON response: {e}, Response: {text_response[:500]}"
+                )
 
         except Exception as e:
             raise AIClientAPIError(f"Failed to generate structured output: {e}")
