@@ -212,6 +212,9 @@ async def customize_style(request: CustomizeStyleRequest) -> GeneratedStyle:
             original_image_url=request.original_image_url,
             style_image_url=request.style_image_url,
             custom_request=request.custom_request,
+            title=request.title,
+            description=request.description,
+            raw_description=request.raw_description,
         )
 
         # Store style for later retrieval

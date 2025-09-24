@@ -67,7 +67,6 @@ export default function StyleSelectionPage() {
     router.push("/customize");
   };
 
-
   const handleImageError = (styleId: string) => {
     setImageLoadErrors((prev) => new Set(prev).add(styleId));
   };

@@ -474,7 +474,9 @@ export default function TutorialPage() {
                                 size="lg"
                                 onClick={toggleVideoPlayback}
                                 className="bg-black/50 hover:bg-black/70 text-white pointer-events-auto"
-                                aria-label={isVideoPlaying ? "一時停止" : "再生"}
+                                aria-label={
+                                  isVideoPlaying ? "一時停止" : "再生"
+                                }
                               >
                                 {isVideoPlaying ? (
                                   <Pause className="w-6 h-6" />

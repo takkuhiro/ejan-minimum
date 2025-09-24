@@ -75,6 +75,9 @@ export interface GenerateCustomStyleRequest {
   originalImageUrl: string; // Original uploaded user photo URL
   styleImageUrl: string; // Selected style image URL
   customRequest: string; // Customization request text
+  title: string; // Title of the selected style
+  description: string; // Description of the selected style
+  rawDescription: string; // Raw description used for the original style generation
 }
 
 // Custom style generation response

@@ -321,6 +321,9 @@ describe("CustomizePage", () => {
         expect(apiClient.generateCustomStyle).toHaveBeenCalledWith(
           expect.objectContaining({
             customRequest: "テストリクエスト",
+            title: expect.any(String),
+            description: expect.any(String),
+            rawDescription: expect.any(String),
           }),
         );
       });

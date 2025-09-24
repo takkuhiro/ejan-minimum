@@ -16,9 +16,12 @@ from google.genai import types
 from google.genai.errors import ClientError
 from google.cloud import storage
 from dotenv import load_dotenv
+import logging
 
 load_dotenv()
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 def generate_video(request) -> Dict[str, Any]:
     """
@@ -164,8 +167,8 @@ def generate_video_with_retry(
         try:
             # 動画生成を試行
             operation = client.models.generate_videos(
-                model="veo-3.0-generate-001",
-                # model="veo-3.0-fast-generate-001",
+                # model="veo-3.0-generate-001",
+                model="veo-3.0-fast-generate-001",
                 # model="veo-2.0-generate-001",
                 prompt=prompt,
                 image=image,
@@ -248,6 +251,8 @@ def main(request):
     # POST リクエストのみ処理
     if request.method != 'POST':
         return (json.dumps({"status": "failed", "error": "Only POST method allowed"}), 405, headers)
+
+    logger.info(f"Request: {request.get_json()}")
 
     # 動画生成処理を実行
     result = generate_video(request)

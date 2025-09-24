@@ -40,7 +40,7 @@ def generate_video_with_retry(max_retries=5):
                 image=image,
                 config=types.GenerateVideosConfig(
                     aspect_ratio="16:9",
-                )
+                ),
             )
             print("Successfully initiated video generation")
             return operation

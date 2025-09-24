@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Sparkles, Wand2, RefreshCw } from "lucide-react";
+import { ArrowLeft, Sparkles, Wand2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -19,7 +18,6 @@ import {
 } from "@/lib/api/error-handler";
 import type { Style } from "@/types/api";
 import Image from "next/image";
-
 
 export default function CustomizePage() {
   const router = useRouter();
@@ -72,6 +70,10 @@ export default function CustomizePage() {
             originalImageUrl: originalImageUrl, // Original uploaded photo
             styleImageUrl: currentStyle.imageUrl, // Selected style image
             customRequest,
+            title: currentStyle.title,
+            description: currentStyle.description,
+            rawDescription:
+              currentStyle.rawDescription || currentStyle.description || "",
           }),
         {
           maxRetries: 2,
@@ -269,7 +271,9 @@ export default function CustomizePage() {
                       どのように調整したいですか？
                     </label>
                     <Textarea
-                      placeholder={"例: もっと華やかにして、アイシャドウを濃くしたい"}
+                      placeholder={
+                        "例: もっと華やかにして、アイシャドウを濃くしたい"
+                      }
                       value={customRequest}
                       onChange={(e) => setCustomRequest(e.target.value)}
                       rows={4}
