@@ -130,6 +130,19 @@ class CustomizeStyleRequest(BaseModel):
         description="Custom style request text from user",
         alias="customRequest",  # Accept camelCase from frontend
     )
+    title: str = Field(
+        ...,
+        description="Title of the selected style",
+    )
+    description: str = Field(
+        ...,
+        description="Description of the selected style",
+    )
+    raw_description: str = Field(
+        ...,
+        description="Raw description used for the original style generation",
+        alias="rawDescription",  # Accept camelCase from frontend
+    )
 
 
 # Alias for consistency with API naming

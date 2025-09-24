@@ -64,7 +64,7 @@ class JapaneseStyleInfo(BaseModel):
     """Model for Japanese style information."""
 
     title: str = Field(description="日本語のタイトル（10文字以内）")
-    description: str = Field(description="日本語の説明文（30文字以内）")
+    description: str = Field(description="日本語の説明文（50文字以内）")
 
 
 def generate_style_prompt(
@@ -150,7 +150,9 @@ class ImageGenerationService:
         while retry_count < max_retries:
             try:
                 # Generate prompt
-                prompt = generate_style_prompt(gender, style_index, application_scope, custom_text)
+                prompt = generate_style_prompt(
+                    gender, style_index, application_scope, custom_text
+                )
 
                 # Call AI API
                 response = self.ai_client.generate_content(
@@ -348,7 +350,9 @@ class ImageGenerationService:
             application_scope = ApplicationScope.BOTH
 
         # Generate styles
-        return await self.generate_three_styles(image, gender, application_scope, custom_text)
+        return await self.generate_three_styles(
+            image, gender, application_scope, custom_text
+        )
 
     def validate_image_size(self, image_data: bytes, max_size_mb: int = 10) -> bool:
         """Validate image size is within limit.
@@ -425,6 +429,9 @@ class ImageGenerationService:
         original_image_url: str,
         style_image_url: str,
         custom_request: str,
+        title: str,
+        description: str,
+        raw_description: str,
     ) -> StyleGeneration:
         """Generate a customized style using two input images.
 
@@ -432,6 +439,9 @@ class ImageGenerationService:
             original_image_url: URL of the original user photo.
             style_image_url: URL of the reference style image.
             custom_request: Custom style request text.
+            title: Title of the selected style.
+            description: Description of the selected style.
+            raw_description: Raw description used for the original style generation.
 
         Returns:
             Generated customized style.
@@ -441,7 +451,7 @@ class ImageGenerationService:
         """
         # Download both images
         try:
-            original_image = await self.download_image_from_url(original_image_url)
+            _original_image = await self.download_image_from_url(original_image_url)
             style_image = await self.download_image_from_url(style_image_url)
         except Exception as e:
             raise ImageGenerationError(f"Failed to download images: {e}")
@@ -462,30 +472,26 @@ class ImageGenerationService:
                 )
                 custom_request_en = translate_response.text
 
-                # Create customized prompt
-                prompt = STYLE_CUSTOMIZE_PROMPT.replace(
+                # Create customized prompt with additional context
+                enhanced_prompt = STYLE_CUSTOMIZE_PROMPT.replace(
                     "$CUSTOM_REQUEST", custom_request_en
                 )
+
+                prompt = enhanced_prompt
 
                 # Call AI API with both images
                 response = self.ai_client.generate_content(
                     model=self.model_name,
                     prompt=prompt,
-                    image=[original_image, style_image],
+                    image=style_image,
                 )
 
-                # Extract raw description
-                raw_description = self.ai_client.extract_text_from_response(response)
-                print(f"Customized style description: {raw_description}")
-                if not raw_description:
-                    raw_description = (
-                        f"Customized style based on user request: {custom_request[:50]}"
-                    )
+                updated_raw_description = raw_description + "\n" + enhanced_prompt
 
                 # Generate Japanese title and description
                 try:
                     prompt = STYLE_INFO_GENERATION_PROMPT.replace(
-                        "$RAW_DESCRIPTION", raw_description
+                        "$RAW_DESCRIPTION", updated_raw_description
                     )
                     japanese_response = self.ai_client.client.models.generate_content(
                         model=self.sub_model_name,
@@ -535,7 +541,7 @@ class ImageGenerationService:
                         id=str(uuid.uuid4()),
                         title=title,
                         description=description,
-                        raw_description=raw_description,
+                        raw_description=updated_raw_description,
                         image_url=image_url,
                     )
                 except Exception as e:

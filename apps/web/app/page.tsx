@@ -330,7 +330,12 @@ export default function WelcomePage() {
             {/* Generate Button */}
             <Button
               onClick={handleStartGeneration}
-              disabled={!selectedGender || !selectedScope || !uploadedPhoto || isGenerating}
+              disabled={
+                !selectedGender ||
+                !selectedScope ||
+                !uploadedPhoto ||
+                isGenerating
+              }
               className="w-full py-6 text-lg"
               size="lg"
             >

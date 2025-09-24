@@ -27,7 +27,8 @@ from app.services.cloud_function_client import CloudFunctionClient
 from app.core.config import settings
 from app.api.prompts import (
     TUTORIAL_STEP_IMAGE_GENERATION_PROMPT,
-    TUTORIAL_STEP_VIDEO_GENERATION_PROMPT,
+    TUTORIAL_VIDEO_PROMPT_GENERATION_PROMPT,
+    TUTORIAL_STEP_VIDEO_REQUIREMENTS,
 )
 
 
@@ -132,6 +133,7 @@ class TutorialGenerationService:
                         previous_image=previous_image,
                         step_title_en=step_data.title_en,
                         step_description_en=step_data.description_en,
+                        step_tools_needed=step_data.tools_needed,
                         step_number=step_number,
                         final_style_image=final_style_image,
                     )
@@ -152,9 +154,23 @@ class TutorialGenerationService:
                 # Start video generation (async, will complete in background)
                 # Use the previous step's image URL (or original for step 1)
 
-                instruction_text = TUTORIAL_STEP_VIDEO_GENERATION_PROMPT.replace(
+                tutorial_video_prompt_gen_prompt = TUTORIAL_VIDEO_PROMPT_GENERATION_PROMPT.replace(
                     "$TITLE_EN", step_data.title_en
-                ).replace("$DESCRIPTION_EN", step_data.description_en)
+                ).replace("$DESCRIPTION_EN", step_data.description_en).replace("$TOOLS_NEEDED", ", ".join(step_data.tools_needed)).replace("$RAW_DESCRIPTION", raw_description)
+                tutorial_video_prompt_gen_response = self.ai_client.generate_content(
+                    model="gemini-2.5-flash",
+                    prompt=tutorial_video_prompt_gen_prompt,
+                    image=previous_image,
+                )
+                instruction_text = tutorial_video_prompt_gen_response.text + TUTORIAL_STEP_VIDEO_REQUIREMENTS
+
+                # instruction_text = (
+                #     TUTORIAL_STEP_VIDEO_GENERATION_PROMPT.replace(
+                #         "$TITLE_EN", step_data.title_en
+                #     )
+                #     .replace("$DESCRIPTION_EN", step_data.description_en)
+                #     .replace("$TOOLS_NEEDED", ", ".join(step_data.tools_needed))
+                # )
                 asyncio.create_task(
                     self._generate_step_video_async(
                         image_url=previous_image_url,
@@ -272,6 +288,7 @@ class TutorialGenerationService:
         previous_image: Image.Image,
         step_title_en: str,
         step_description_en: str,
+        step_tools_needed: List[str],
         step_number: int,
         final_style_image: Optional[Image.Image] = None,
     ) -> Image.Image:
@@ -279,9 +296,13 @@ class TutorialGenerationService:
         try:
             # Prepare the prompt with consideration for final style if available
             if final_style_image:
-                image_prompt = TUTORIAL_STEP_IMAGE_GENERATION_PROMPT.replace(
-                    "$STEP_TITLE_EN", step_title_en
-                ).replace("$STEP_DESCRIPTION_EN", step_description_en)
+                image_prompt = (
+                    TUTORIAL_STEP_IMAGE_GENERATION_PROMPT.replace(
+                        "$STEP_TITLE_EN", step_title_en
+                    )
+                    .replace("$STEP_DESCRIPTION_EN", step_description_en)
+                    .replace("$TOOLS_NEEDED", ", ".join(step_tools_needed))
+                )
                 # Use both previous and final style images
                 response = self.ai_client.generate_content(
                     model="gemini-2.5-flash-image-preview",
@@ -290,9 +311,13 @@ class TutorialGenerationService:
                 )
             else:
                 # Fallback to original prompt without final style
-                image_prompt = TUTORIAL_STEP_IMAGE_GENERATION_PROMPT.replace(
-                    "$STEP_TITLE_EN", step_title_en
-                ).replace("$STEP_DESCRIPTION_EN", step_description_en)
+                image_prompt = (
+                    TUTORIAL_STEP_IMAGE_GENERATION_PROMPT.replace(
+                        "$STEP_TITLE_EN", step_title_en
+                    )
+                    .replace("$STEP_DESCRIPTION_EN", step_description_en)
+                    .replace("$TOOLS_NEEDED", ", ".join(step_tools_needed))
+                )
                 response = self.ai_client.generate_content(
                     model="gemini-2.5-flash-image-preview",
                     prompt=image_prompt,

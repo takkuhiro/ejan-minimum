@@ -38,6 +38,9 @@ def generate_video_with_retry(max_retries=5):
                 # model="veo-2.0-generate-001",
                 prompt=prompt,
                 image=image,
+                config=types.GenerateVideosConfig(
+                    aspect_ratio="16:9",
+                ),
             )
             print("Successfully initiated video generation")
             return operation

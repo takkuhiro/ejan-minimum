@@ -8,7 +8,11 @@ from PIL import Image
 from app.models.response import GeneratedStyle
 from app.services.ai_client import AIClient
 from app.services.storage import StorageService
-from app.services.image_generation import ImageGenerationService, Gender, ApplicationScope
+from app.services.image_generation import (
+    ImageGenerationService,
+    Gender,
+    ApplicationScope,
+)
 
 
 class StyleGenerationService:
@@ -88,6 +92,9 @@ class StyleGenerationService:
         original_image_url: str,
         style_image_url: str,
         custom_request: str,
+        title: str,
+        description: str,
+        raw_description: str,
     ) -> Tuple[GeneratedStyle, Optional[str]]:
         """
         Generate a customized style using two images and custom request.
@@ -96,6 +103,9 @@ class StyleGenerationService:
             original_image_url: URL of the original user photo
             style_image_url: URL of the reference style image
             custom_request: Custom style request text
+            title: Title of the selected style
+            description: Description of the selected style
+            raw_description: Raw description used for the original style generation
 
         Returns:
             Tuple of (Generated customized style, Original image URL)
@@ -105,6 +115,9 @@ class StyleGenerationService:
             original_image_url=original_image_url,
             style_image_url=style_image_url,
             custom_request=custom_request,
+            title=title,
+            description=description,
+            raw_description=raw_description,
         )
 
         # Convert StyleGeneration to GeneratedStyle response model

@@ -474,7 +474,9 @@ export default function TutorialPage() {
                                 size="lg"
                                 onClick={toggleVideoPlayback}
                                 className="bg-black/50 hover:bg-black/70 text-white pointer-events-auto"
-                                aria-label={isVideoPlaying ? "一時停止" : "再生"}
+                                aria-label={
+                                  isVideoPlaying ? "一時停止" : "再生"
+                                }
                               >
                                 {isVideoPlaying ? (
                                   <Pause className="w-6 h-6" />
@@ -511,13 +513,13 @@ export default function TutorialPage() {
                   <div>
                     <h3 className="font-semibold mb-3">完成イメージ</h3>
                     {currentStepData.imageUrl ? (
-                      <div className="relative aspect-video rounded-lg overflow-hidden">
+                      <div className="relative aspect-video rounded-lg overflow-hidden bg-black/5">
                         <Image
                           src={currentStepData.imageUrl}
                           alt={`${currentStepData.title} result`}
                           width={800}
                           height={600}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-contain"
                           priority
                           onError={() => {
                             console.error(
